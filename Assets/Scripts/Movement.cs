@@ -21,9 +21,11 @@ public class Movement : MonoBehaviour
     public int MIN_JUMP_FRAMES;
     public int MID_JUMP_FRAMES;
     public int MAX_JUMP_FRAMES;
-    public string playerInputIndex;
+    public string jumpButton;
+    public string horizontalAxis;
 
-    public Transform groundCheck;
+    public Transform leftGroundCheck;
+    public Transform rightGroundCheck;
     public Transform leftWallCheck;
     public Transform rightWallCheck;
     public float checkRadius;
@@ -58,13 +60,13 @@ public class Movement : MonoBehaviour
         // Check if we are grounded.
         bool wasGrounded = isGrounded;
         bool wasOnWall = isOnWall;
-        isGrounded = Physics2D.OverlapCircle(groundCheck.position, checkRadius, floorLayerMask);
+        isGrounded = Physics2D.OverlapCircle(leftGroundCheck.position, checkRadius, floorLayerMask) || Physics2D.OverlapCircle(rightGroundCheck.position, checkRadius, floorLayerMask);
         isOnWall = Physics2D.OverlapCircle(leftWallCheck.position, checkRadius, wallLayerMask) || Physics2D.OverlapCircle(rightWallCheck.position, checkRadius, wallLayerMask);
 
         // On landing, apply horizontal boost for responsive controls
         if (isGrounded && (wasGrounded != isGrounded))
         {
-            SetVelocity(GetComponent<Rigidbody2D>().velocity.x * momentumScale, null);
+            GetComponent<Rigidbody2D>().velocity = PhysicsUtility.SetVelocity(GetComponent<Rigidbody2D>().velocity, GetComponent<Rigidbody2D>().velocity.x * momentumScale, null);
         }
         
         // On hitting a wall, apply horizontal momentum to vertical momentum
@@ -72,9 +74,9 @@ public class Movement : MonoBehaviour
         {
             float ysign = Mathf.Sign(GetComponent<Rigidbody2D>().velocity.y);
             if (ysign > 0.0f)
-                SetVelocity(0.0f, GetComponent<Rigidbody2D>().velocity.magnitude * ysign);
+                GetComponent<Rigidbody2D>().velocity = PhysicsUtility.SetVelocity(GetComponent<Rigidbody2D>().velocity, 0.0f, GetComponent<Rigidbody2D>().velocity.magnitude * ysign);
             else
-                SetVelocity(0.0f, 0.0f);
+                GetComponent<Rigidbody2D>().velocity = PhysicsUtility.SetVelocity(GetComponent<Rigidbody2D>().velocity, 0.0f, 0.0f);
 
             // flip character
             Flip();
@@ -95,7 +97,7 @@ public class Movement : MonoBehaviour
         DoJump();
 
         // Apply all accelerations.
-        ApplyAccelerations();
+        GetComponent<Rigidbody2D>().velocity = PhysicsUtility.ApplyAccelerations(GetComponent<Rigidbody2D>().velocity, accelerations.Values);
     }
 
     private void DoMove()
@@ -104,7 +106,7 @@ public class Movement : MonoBehaviour
         if (!isOnWall || (isOnWall && isGrounded))
         {
             // Get the scaled movement direction depending on if grounded or in air.
-            float direction = Input.GetAxisRaw("Horizontal" + playerInputIndex);
+            float direction = Input.GetAxisRaw(horizontalAxis);
             direction *= isGrounded ? maxMoveSpeed : maxAirSpeed;
 
             float currAcceleration = isGrounded ? moveAcceleration : airAcceleration;
@@ -117,7 +119,7 @@ public class Movement : MonoBehaviour
                 // If the player's direction changed, set horizontal velocity to half. For responsiveness.
                 if (Mathf.Sign(previousDirection) != Mathf.Sign(direction))
                 {
-                    SetVelocity(GetComponent<Rigidbody2D>().velocity.x * currPivotSpeedRetention, null);
+                    GetComponent<Rigidbody2D>().velocity = PhysicsUtility.SetVelocity(GetComponent<Rigidbody2D>().velocity, GetComponent<Rigidbody2D>().velocity.x * currPivotSpeedRetention, null);
                     Flip();
                 }
 
@@ -141,7 +143,7 @@ public class Movement : MonoBehaviour
     void DoJump()
     {
         // Player has jumped?
-        if (Input.GetButtonDown("Jump" + playerInputIndex) && (isGrounded || isOnWall) && jumpTimer == jumpMaxTimer)
+        if (Input.GetButtonDown(jumpButton) && (isGrounded || isOnWall) && jumpTimer == jumpMaxTimer)
         {
             // Reset jump timer and max frames of jumping
             jumpTimer = 0;
@@ -149,7 +151,7 @@ public class Movement : MonoBehaviour
 
             // If jumping from wall, apply horizontal acceleration
             if (isOnWall && !isGrounded)
-                SetVelocity(GetComponent<Transform>().localScale.x * maxMoveSpeed, null);
+                GetComponent<Rigidbody2D>().velocity = PhysicsUtility.SetVelocity(GetComponent<Rigidbody2D>().velocity, GetComponent<Transform>().localScale.x * maxMoveSpeed, null);
         }
 
         // If a jump is in progress, apply acceleration
@@ -158,7 +160,7 @@ public class Movement : MonoBehaviour
             isJumping = true;
 
             // If just about to hit jump frame limit, increase limits accordingly
-            if (Input.GetButton("Jump" + playerInputIndex) && jumpTimer == jumpMaxTimer - 1)
+            if (Input.GetButton(jumpButton) && jumpTimer == jumpMaxTimer - 1)
             {
                 if (jumpMaxTimer == MIN_JUMP_FRAMES)
                     jumpMaxTimer = MID_JUMP_FRAMES;
@@ -187,36 +189,5 @@ public class Movement : MonoBehaviour
     private void Flip()
     {
         GetComponent<Transform>().localScale = new Vector3(-Mathf.Sign(previousDirection), GetComponent<Transform>().localScale.y, GetComponent<Transform>().localScale.z);
-    }
-
-    // NULL values are PASS-THROUGH. AKA they do NOT change the player velocity.
-    private void SetVelocity(float? x, float? y)
-    {
-        Vector2 currentVelocity = GetComponent<Rigidbody2D>().velocity;
-        Vector2 newVelocity = new Vector2(currentVelocity.x, currentVelocity.y);
-        if (x.HasValue)
-            newVelocity.x = x.GetValueOrDefault();
-        if (y.HasValue)
-            newVelocity.y = y.GetValueOrDefault();
-        GetComponent<Rigidbody2D>().velocity = newVelocity;
-    }
-
-    private void ApplyAccelerations()
-    {
-        foreach (Acceleration accel in accelerations.Values)
-        {
-            // Get current and target velocities
-            Vector2 currentVelocity = GetComponent<Rigidbody2D>().velocity;
-            Vector2 targetVelocity = new Vector2(currentVelocity.x, currentVelocity.y);
-
-            // If the target velocity has a non-null value, then use its value
-            if (accel.maxVelX.HasValue)
-                targetVelocity.x = accel.maxVelX.GetValueOrDefault();
-            if (accel.maxVelY.HasValue)
-                targetVelocity.y = accel.maxVelY.GetValueOrDefault();
-
-            // Linearly interpolate towards the new velocity
-            GetComponent<Rigidbody2D>().velocity = Vector2.MoveTowards(currentVelocity, targetVelocity, accel.magnitude * Time.fixedDeltaTime);
-        }
     }
 }
