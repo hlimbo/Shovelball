@@ -17,14 +17,29 @@ public class Movement : MonoBehaviour
     {
         accelerations = new Dictionary<string, Acceleration>();
         accelerations.Add("Gravity", new Acceleration(null, maxFallSpeed, fallAcceleration));
-        accelerations.Add("Movement", new Acceleration(null, null, 0.0f));
+        accelerations.Add("Movement", new Acceleration(null, null, moveAcceleration));
         accelerations.Add("GroundFriction", new Acceleration(0.0f, null, groundFriction));
 	}
 	
 	// Update is called once per frame
 	void FixedUpdate ()
     {
-        ApplyAccelerations();
+        //Input.GetAxisRaw("Horizontal" + playerInputIndex);
+
+        //controllers
+        float direction = Input.GetAxis("Horizontal" + playerInputIndex) * maxMoveSpeed;
+        if (direction != 0)
+        {
+            accelerations["GroundFriction"].magnitude = 0.0f;
+            accelerations["Movement"].maxVelX = direction;
+        }
+        else
+        {
+            accelerations["GroundFriction"].magnitude = groundFriction;
+        }
+
+
+            ApplyAccelerations();
 	}
 
     private void OnCollisionEnter2D (Collision2D collision)
@@ -38,7 +53,7 @@ public class Movement : MonoBehaviour
 
     private void OnCollisionExit2D (Collision2D collision)
     {
-        if (collision.gameObject.tag == TagManager.floor)
+        if (collision.gameObject.tag == TagManager.floor || collision.gameObject.tag == TagManager.platform)
         {
             accelerations["Gravity"].maxVelY = maxFallSpeed;
         }
