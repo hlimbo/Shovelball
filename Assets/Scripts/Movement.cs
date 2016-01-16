@@ -23,16 +23,19 @@ public class Movement : MonoBehaviour
     public int MAX_JUMP_FRAMES;
     public string playerInputIndex;
 
+    public Transform groundCheck;
+    public Transform leftWallCheck;
+    public Transform rightWallCheck;
+    public float checkRadius;
+    public LayerMask floorLayerMask;
+    public LayerMask wallLayerMask;
+
     public bool isGrounded;
     public bool isOnWall;
     public bool isJumping;
 
     private Dictionary<string, Acceleration> accelerations;
-    private bool checkGroundedFlag = false;
     private float previousDirection;
-    private float wallDirection;
-    private float checkPlatformY;
-    private float landingMomentum;
     private int jumpTimer;
     private int jumpMaxTimer;
 
@@ -53,15 +56,30 @@ public class Movement : MonoBehaviour
     void FixedUpdate()
     {
         // Check if we are grounded.
-        if (checkGroundedFlag)
+        bool wasGrounded = isGrounded;
+        bool wasOnWall = isOnWall;
+        isGrounded = Physics2D.OverlapCircle(groundCheck.position, checkRadius, floorLayerMask);
+        bool isOnLeftWall = Physics2D.OverlapCircle(leftWallCheck.position, checkRadius, wallLayerMask);
+        bool isOnRightWall = Physics2D.OverlapCircle(rightWallCheck.position, checkRadius, wallLayerMask);
+        isOnWall = isOnLeftWall || isOnRightWall;
+
+        // On landing, apply horizontal boost for responsive controls
+        if (isGrounded && (wasGrounded != isGrounded))
         {
-            if (IsAbovePlatform(checkPlatformY))
-            {
-                isGrounded = true;
-                checkGroundedFlag = false;
-                // Need some negative velocity to remove infinite floating bugs
-                SetVelocity(landingMomentum, -1.0f);
-            }
+            SetVelocity(GetComponent<Rigidbody2D>().velocity.x * momentumScale, null);
+        }
+        
+        // On hitting a wall, apply horizontal momentum to vertical momentum
+        if (isOnWall && (wasOnWall != isOnWall))
+        {
+            float ysign = Mathf.Sign(GetComponent<Rigidbody2D>().velocity.y);
+            if (ysign > 0.0f)
+                SetVelocity(0.0f, GetComponent<Rigidbody2D>().velocity.magnitude * ysign);
+            else
+                SetVelocity(0.0f, 0.0f);
+
+            // flip character
+            GetComponent<Transform>().localScale = new Vector3((isOnLeftWall)? -1 : 1, GetComponent<Transform>().localScale.y, GetComponent<Transform>().localScale.z);
         }
 
         // Disable gravity if needed
@@ -166,46 +184,6 @@ public class Movement : MonoBehaviour
             accelerations["Jump"].maxVelY = null;
             accelerations["Jump"].magnitude = 0.0f;
         }
-    }
-
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        // If we hit the floor or platform ...
-        if (collision.gameObject.tag == TagManager.floor || collision.gameObject.tag == TagManager.platform)
-        {
-            // Schedule a check for whether we landed on TOP of a platform. Need to do it in the next FixedUpdate since at the
-            // moment of collision, the colliders are intersecting and we can't accurately compare the colliders.
-            checkGroundedFlag = true;
-            checkPlatformY = collision.collider.transform.position.y + (((BoxCollider2D)collision.collider).size.y / 2);
-            landingMomentum = GetComponent<Rigidbody2D>().velocity.x * momentumScale;
-        }
-        else if (collision.gameObject.tag == TagManager.wall)
-        {
-            isOnWall = true;
-            // If moving up, transfer horizontal speed to vertical
-            float ysign = Mathf.Sign(GetComponent<Rigidbody2D>().velocity.y);
-            if (ysign > 0.0f)
-                SetVelocity(0.0f, GetComponent<Rigidbody2D>().velocity.magnitude * ysign);
-            else
-                SetVelocity(0.0f, 0.0f);
-            // flip character
-            wallDirection = collision.gameObject.transform.localScale.x;
-            GetComponent<Transform>().localScale = new Vector3(wallDirection, GetComponent<Transform>().localScale.y, GetComponent<Transform>().localScale.z);
-        }
-    }
-
-    private void OnCollisionExit2D(Collision2D collision)
-    {
-        if (collision.gameObject.tag == TagManager.floor || collision.gameObject.tag == TagManager.platform)
-            isGrounded = false;
-        else if (collision.gameObject.tag == TagManager.wall)
-            isOnWall = false;
-    }
-
-    private bool IsAbovePlatform(float platformy)
-    {
-        float playery = GetComponent<Transform>().position.y - (GetComponent<BoxCollider2D>().size.y / 2);
-        return platformy < playery;
     }
 
     // NULL values are PASS-THROUGH. AKA they do NOT change the player velocity.
