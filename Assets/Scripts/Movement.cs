@@ -29,7 +29,7 @@ public class Movement : MonoBehaviour
     {
         if (collision.gameObject.tag == TagManager.floor)
         {
-            
+            GetComponent<Rigidbody2D>().velocity = new Vector2(GetComponent<Rigidbody2D>().velocity.x, 0.0f);
         }
     }
 
