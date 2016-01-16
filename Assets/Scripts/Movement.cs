@@ -3,13 +3,13 @@ using System.Collections.Generic;
 
 public class Movement : MonoBehaviour
 {
-    public float maxMoveSpeed = 8.0f;
-    public float moveAcceleration = 4.0f;
-    public float maxFallSpeed = -8.0f;
-    public float fallAcceleration = 0.5f;
-    public float groundFriction = 1.0f;
+    public float maxMoveSpeed;
+    public float moveAcceleration;
+    public float maxFallSpeed;
+    public float fallAcceleration;
+    public float groundFriction;
     public string playerInputIndex;
-    public bool isGrounded = false;
+    public bool isGrounded;
 
     private Dictionary<string, Acceleration> accelerations;
 
@@ -47,9 +47,6 @@ public class Movement : MonoBehaviour
     {
         if (collision.gameObject.tag == TagManager.floor || collision.gameObject.tag == TagManager.platform)
         {
-            
-            accelerations["Gravity"].maxVelY = 0.0f;
-            GetComponent<Rigidbody2D>().velocity = new Vector2(GetComponent<Rigidbody2D>().velocity.x, 0.0f);
             isGrounded = true;
         }
     }
@@ -58,7 +55,6 @@ public class Movement : MonoBehaviour
     {
         if (collision.gameObject.tag == TagManager.floor || collision.gameObject.tag == TagManager.platform)
         {
-            accelerations["Gravity"].maxVelY = maxFallSpeed;
             isGrounded = false;
         }
     }
