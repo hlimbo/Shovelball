@@ -22,8 +22,24 @@ public class Movement : MonoBehaviour
 	// Update is called once per frame
 	void FixedUpdate ()
     {
-	    
+        ApplyAccelerations();
 	}
+
+    private void OnCollisionEnter2D (Collision2D collision)
+    {
+        if (collision.gameObject.tag == TagManager.floor)
+        {
+            
+        }
+    }
+
+    private void OnCollisionExit2D (Collision2D collision)
+    {
+        if (collision.gameObject.tag == TagManager.floor)
+        {
+
+        }
+    }
 
     private void ApplyAccelerations()
     {
