@@ -59,9 +59,7 @@ public class Movement : MonoBehaviour
         bool wasGrounded = isGrounded;
         bool wasOnWall = isOnWall;
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, checkRadius, floorLayerMask);
-        bool isOnLeftWall = Physics2D.OverlapCircle(leftWallCheck.position, checkRadius, wallLayerMask);
-        bool isOnRightWall = Physics2D.OverlapCircle(rightWallCheck.position, checkRadius, wallLayerMask);
-        isOnWall = isOnLeftWall || isOnRightWall;
+        isOnWall = Physics2D.OverlapCircle(leftWallCheck.position, checkRadius, wallLayerMask) || Physics2D.OverlapCircle(rightWallCheck.position, checkRadius, wallLayerMask);
 
         // On landing, apply horizontal boost for responsive controls
         if (isGrounded && (wasGrounded != isGrounded))
@@ -79,7 +77,7 @@ public class Movement : MonoBehaviour
                 SetVelocity(0.0f, 0.0f);
 
             // flip character
-            GetComponent<Transform>().localScale = new Vector3((isOnLeftWall)? -1 : 1, GetComponent<Transform>().localScale.y, GetComponent<Transform>().localScale.z);
+            Flip();
         }
 
         // Disable gravity if needed
@@ -120,7 +118,7 @@ public class Movement : MonoBehaviour
                 if (Mathf.Sign(previousDirection) != Mathf.Sign(direction))
                 {
                     SetVelocity(GetComponent<Rigidbody2D>().velocity.x * currPivotSpeedRetention, null);
-                    GetComponent<Transform>().localScale = new Vector3(-Mathf.Sign(previousDirection), GetComponent<Transform>().localScale.y, GetComponent<Transform>().localScale.z);
+                    Flip();
                 }
 
                 // Disable friction and apply movement
@@ -184,6 +182,11 @@ public class Movement : MonoBehaviour
             accelerations["Jump"].maxVelY = null;
             accelerations["Jump"].magnitude = 0.0f;
         }
+    }
+
+    private void Flip()
+    {
+        GetComponent<Transform>().localScale = new Vector3(-Mathf.Sign(previousDirection), GetComponent<Transform>().localScale.y, GetComponent<Transform>().localScale.z);
     }
 
     // NULL values are PASS-THROUGH. AKA they do NOT change the player velocity.
