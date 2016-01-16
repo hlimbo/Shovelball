@@ -35,6 +35,7 @@ public class Movement : MonoBehaviour
     public bool isGrounded;
     public bool isOnWall;
     public bool isJumping;
+    public bool facingRight = true;
 
     private Dictionary<string, Acceleration> accelerations;
     private float previousDirection;
@@ -189,5 +190,6 @@ public class Movement : MonoBehaviour
     private void Flip()
     {
         GetComponent<Transform>().localScale = new Vector3(-Mathf.Sign(previousDirection), GetComponent<Transform>().localScale.y, GetComponent<Transform>().localScale.z);
+        facingRight = !facingRight;
     }
 }
