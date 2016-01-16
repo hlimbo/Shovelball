@@ -9,6 +9,7 @@ public class Movement : MonoBehaviour
     public float fallAcceleration = 0.5f;
     public float groundFriction = 1.0f;
     public string playerInputIndex;
+    public bool isGrounded = false;
 
     private Dictionary<string, Acceleration> accelerations;
 
@@ -46,8 +47,10 @@ public class Movement : MonoBehaviour
     {
         if (collision.gameObject.tag == TagManager.floor || collision.gameObject.tag == TagManager.platform)
         {
+            
             accelerations["Gravity"].maxVelY = 0.0f;
             GetComponent<Rigidbody2D>().velocity = new Vector2(GetComponent<Rigidbody2D>().velocity.x, 0.0f);
+            isGrounded = true;
         }
     }
 
@@ -56,6 +59,7 @@ public class Movement : MonoBehaviour
         if (collision.gameObject.tag == TagManager.floor || collision.gameObject.tag == TagManager.platform)
         {
             accelerations["Gravity"].maxVelY = maxFallSpeed;
+            isGrounded = false;
         }
     }
 
