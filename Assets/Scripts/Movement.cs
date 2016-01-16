@@ -10,17 +10,25 @@ public class Movement : MonoBehaviour
     public float groundFriction = 1.0f;
     public string playerInputIndex;
 
+    public bool onGround = false;
+    public float jumpSpeed;
+
     private Dictionary<string, Acceleration> accelerations;
+    private Rigidbody2D playerBody;
 
 	// Use this for initialization
 	void Start ()
     {
+
+        playerBody = GetComponent<Rigidbody2D>();
+
         accelerations = new Dictionary<string, Acceleration>();
         accelerations.Add("Gravity", new Acceleration(null, maxFallSpeed, fallAcceleration));
         accelerations.Add("Movement", new Acceleration(null, null, moveAcceleration));
         accelerations.Add("GroundFriction", new Acceleration(0.0f, null, groundFriction));
+
 	}
-	
+
 	// Update is called once per frame
 	void FixedUpdate ()
     {
@@ -38,8 +46,15 @@ public class Movement : MonoBehaviour
             accelerations["GroundFriction"].magnitude = groundFriction;
         }
 
+        //jumping
+        if (Input.GetKeyDown(KeyCode.Space) && onGround)
+        {
+            Vector2 currentVelocity = playerBody.velocity;
+            playerBody.velocity = new Vector2(playerBody.velocity.x, jumpSpeed);
+        }
 
-            ApplyAccelerations();
+
+        ApplyAccelerations();
 	}
 
     private void OnCollisionEnter2D (Collision2D collision)
@@ -47,7 +62,8 @@ public class Movement : MonoBehaviour
         if (collision.gameObject.tag == TagManager.floor || collision.gameObject.tag == TagManager.platform)
         {
             accelerations["Gravity"].maxVelY = 0.0f;
-            GetComponent<Rigidbody2D>().velocity = new Vector2(GetComponent<Rigidbody2D>().velocity.x, 0.0f);
+            playerBody.velocity = new Vector2(playerBody.velocity.x, 0.0f);
+            onGround = true;
         }
     }
 
@@ -56,6 +72,7 @@ public class Movement : MonoBehaviour
         if (collision.gameObject.tag == TagManager.floor || collision.gameObject.tag == TagManager.platform)
         {
             accelerations["Gravity"].maxVelY = maxFallSpeed;
+            onGround = false;
         }
     }
 
