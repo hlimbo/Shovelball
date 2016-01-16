@@ -6,7 +6,8 @@ public class Movement : MonoBehaviour
     public float maxMoveSpeed = 8.0f;
     public float moveAcceleration = 4.0f;
     public float maxFallSpeed = -8.0f;
-    public float fallAcceleration = 2.0f;
+    public float fallAcceleration = 0.5f;
+    public float groundFriction = 1.0f;
     public string playerInputIndex;
 
     private Dictionary<string, Acceleration> accelerations;
@@ -17,6 +18,7 @@ public class Movement : MonoBehaviour
         accelerations = new Dictionary<string, Acceleration>();
         accelerations.Add("Gravity", new Acceleration(null, maxFallSpeed, fallAcceleration));
         accelerations.Add("Movement", new Acceleration(null, null, 0.0f));
+        accelerations.Add("GroundFriction", new Acceleration(0.0f, null, groundFriction));
 	}
 	
 	// Update is called once per frame
@@ -27,8 +29,9 @@ public class Movement : MonoBehaviour
 
     private void OnCollisionEnter2D (Collision2D collision)
     {
-        if (collision.gameObject.tag == TagManager.floor)
+        if (collision.gameObject.tag == TagManager.floor || collision.gameObject.tag == TagManager.platform)
         {
+            accelerations["Gravity"].maxVelY = 0.0f;
             GetComponent<Rigidbody2D>().velocity = new Vector2(GetComponent<Rigidbody2D>().velocity.x, 0.0f);
         }
     }
@@ -37,7 +40,7 @@ public class Movement : MonoBehaviour
     {
         if (collision.gameObject.tag == TagManager.floor)
         {
-
+            accelerations["Gravity"].maxVelY = maxFallSpeed;
         }
     }
 

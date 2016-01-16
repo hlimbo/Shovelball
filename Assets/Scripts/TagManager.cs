@@ -5,4 +5,5 @@
     public static string ball = "Ball";
     public static string goal = "Goal";
     public static string powerup = "PowerUp";
+    public static string platform = "Platform";
 }
