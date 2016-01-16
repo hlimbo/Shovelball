@@ -23,13 +23,6 @@ public class Movement : MonoBehaviour
     public int MAX_JUMP_FRAMES;
     public string playerInputIndex;
 
-<<<<<<< HEAD
-    public bool onGround = false;
-    public float jumpSpeed;
-
-    private Dictionary<string, Acceleration> accelerations;
-    private Rigidbody2D playerBody;
-=======
     public bool isGrounded;
     public bool isOnWall;
     public bool isJumping;
@@ -42,34 +35,22 @@ public class Movement : MonoBehaviour
     private float landingMomentum;
     private int jumpTimer;
     private int jumpMaxTimer;
->>>>>>> a060703439a49a9effe2e7a54188ab691502d146
 
-	// Use this for initialization
-	void Start ()
+    // Use this for initialization
+    void Start()
     {
-
-        playerBody = GetComponent<Rigidbody2D>();
-
         accelerations = new Dictionary<string, Acceleration>();
         accelerations.Add("Gravity", new Acceleration(null, maxFallSpeed, fallAcceleration));
         accelerations.Add("Movement", new Acceleration(null, null, moveAcceleration));
-<<<<<<< HEAD
-        accelerations.Add("GroundFriction", new Acceleration(0.0f, null, groundFriction));
-
-	}
-
-	// Update is called once per frame
-=======
         accelerations.Add("Friction", new Acceleration(null, null, 0.0f));
         accelerations.Add("Jump", new Acceleration(null, null, 0.0f));
 
         jumpTimer = MIN_JUMP_FRAMES;
         jumpMaxTimer = MIN_JUMP_FRAMES;
-	}
-	
-	// FixedUpdate is called once per physics step
->>>>>>> a060703439a49a9effe2e7a54188ab691502d146
-	void FixedUpdate ()
+    }
+
+    // FixedUpdate is called once per physics step
+    void FixedUpdate()
     {
         // Check if we are grounded.
         if (checkGroundedFlag)
@@ -90,7 +71,7 @@ public class Movement : MonoBehaviour
             accelerations["Gravity"].maxVelY = wallSlideSpeed;
         else
             accelerations["Gravity"].maxVelY = maxFallSpeed;
-        
+
         // Apply movement.
         DoMove();
 
@@ -99,7 +80,7 @@ public class Movement : MonoBehaviour
 
         // Apply all accelerations.
         ApplyAccelerations();
-	}
+    }
 
     private void DoMove()
     {
@@ -150,18 +131,6 @@ public class Movement : MonoBehaviour
             jumpTimer = 0;
             jumpMaxTimer = MIN_JUMP_FRAMES;
 
-<<<<<<< HEAD
-        //jumping
-        if (Input.GetKeyDown(KeyCode.Space) && onGround)
-        {
-            Vector2 currentVelocity = playerBody.velocity;
-            playerBody.velocity = new Vector2(playerBody.velocity.x, jumpSpeed);
-        }
-
-
-        ApplyAccelerations();
-	}
-=======
             // If jumping from wall, apply horizontal acceleration
             if (isOnWall && !isGrounded)
                 SetVelocity(GetComponent<Transform>().localScale.x * maxMoveSpeed, null);
@@ -182,7 +151,7 @@ public class Movement : MonoBehaviour
             }
 
             // scaling jump acceleration over the maximum POSSIBLE jump
-            float scale = 1.0f - ((float) jumpTimer / (float) MAX_JUMP_FRAMES);
+            float scale = 1.0f - ((float)jumpTimer / (float)MAX_JUMP_FRAMES);
             float scaledMore = Mathf.Pow(scale, jumpScaling);
 
             accelerations["Jump"].maxVelY = maxJumpSpeed;
@@ -198,22 +167,16 @@ public class Movement : MonoBehaviour
             accelerations["Jump"].magnitude = 0.0f;
         }
     }
->>>>>>> a060703439a49a9effe2e7a54188ab691502d146
 
-    private void OnCollisionEnter2D (Collision2D collision)
+    private void OnCollisionEnter2D(Collision2D collision)
     {
         // If we hit the floor or platform ...
         if (collision.gameObject.tag == TagManager.floor || collision.gameObject.tag == TagManager.platform)
         {
-<<<<<<< HEAD
-            accelerations["Gravity"].maxVelY = 0.0f;
-            playerBody.velocity = new Vector2(playerBody.velocity.x, 0.0f);
-            onGround = true;
-=======
             // Schedule a check for whether we landed on TOP of a platform. Need to do it in the next FixedUpdate since at the
             // moment of collision, the colliders are intersecting and we can't accurately compare the colliders.
             checkGroundedFlag = true;
-            checkPlatformY = collision.collider.transform.position.y + (((BoxCollider2D) collision.collider).size.y / 2);
+            checkPlatformY = collision.collider.transform.position.y + (((BoxCollider2D)collision.collider).size.y / 2);
             landingMomentum = GetComponent<Rigidbody2D>().velocity.x * momentumScale;
         }
         else if (collision.gameObject.tag == TagManager.wall)
@@ -228,25 +191,18 @@ public class Movement : MonoBehaviour
             // flip character
             wallDirection = collision.gameObject.transform.localScale.x;
             GetComponent<Transform>().localScale = new Vector3(wallDirection, GetComponent<Transform>().localScale.y, GetComponent<Transform>().localScale.z);
->>>>>>> a060703439a49a9effe2e7a54188ab691502d146
         }
     }
 
-    private void OnCollisionExit2D (Collision2D collision)
+    private void OnCollisionExit2D(Collision2D collision)
     {
         if (collision.gameObject.tag == TagManager.floor || collision.gameObject.tag == TagManager.platform)
-<<<<<<< HEAD
-        {
-            accelerations["Gravity"].maxVelY = maxFallSpeed;
-            onGround = false;
-        }
-=======
             isGrounded = false;
         else if (collision.gameObject.tag == TagManager.wall)
             isOnWall = false;
     }
 
-    private bool IsAbovePlatform (float platformy)
+    private bool IsAbovePlatform(float platformy)
     {
         float playery = GetComponent<Transform>().position.y - (GetComponent<BoxCollider2D>().size.y / 2);
         return platformy < playery;
@@ -262,7 +218,6 @@ public class Movement : MonoBehaviour
         if (y.HasValue)
             newVelocity.y = y.GetValueOrDefault();
         GetComponent<Rigidbody2D>().velocity = newVelocity;
->>>>>>> a060703439a49a9effe2e7a54188ab691502d146
     }
 
     private void ApplyAccelerations()
@@ -278,7 +233,7 @@ public class Movement : MonoBehaviour
                 targetVelocity.x = accel.maxVelX.GetValueOrDefault();
             if (accel.maxVelY.HasValue)
                 targetVelocity.y = accel.maxVelY.GetValueOrDefault();
-            
+
             // Linearly interpolate towards the new velocity
             GetComponent<Rigidbody2D>().velocity = Vector2.MoveTowards(currentVelocity, targetVelocity, accel.magnitude * Time.fixedDeltaTime);
         }

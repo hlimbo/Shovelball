@@ -11,6 +11,7 @@ public class PlayerMovement : MonoBehaviour {
     public float jumpSpeed;
 
 
+
 	// Use this for initialization
 	void Start () {
         body = GetComponent<Rigidbody2D>();
