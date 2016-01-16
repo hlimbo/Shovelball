@@ -7,6 +7,7 @@ public class Movement : MonoBehaviour
     public float moveAcceleration = 4.0f;
     public float maxFallSpeed = -8.0f;
     public float fallAcceleration = 2.0f;
+    public string playerInputIndex;
 
     private Dictionary<string, Acceleration> accelerations;
 
