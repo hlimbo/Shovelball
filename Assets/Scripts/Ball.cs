@@ -50,6 +50,7 @@ public class Ball : MonoBehaviour {
     {
         if (delayFrames == maxDelayFrames)
         {
+            
             //detect what the ball hits using physics engine.
             isGrounded = Physics2D.OverlapCircle(ballBody.position, collider.radius, floorLayerMask);
 
@@ -82,6 +83,11 @@ public class Ball : MonoBehaviour {
             }
 
             ballBody.velocity = PhysicsUtility.ApplyAccelerations(ballBody.velocity, accelerations.Values);
+        }
+        else if (delayFrames == maxDelayFrames - 1)
+        {
+            ballBody.velocity = stashVelocity;
+            delayFrames++;
         }
         else
         {
