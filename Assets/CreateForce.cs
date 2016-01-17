@@ -22,6 +22,7 @@ public class CreateForce : MonoBehaviour
             }
 
             ball.SendFlying(new Vector2(forceVector.x, forceVector.y));
+            movement.Lag((int) (forceVector.magnitude / 5f));
         }
     }
 }

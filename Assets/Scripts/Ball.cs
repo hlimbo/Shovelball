@@ -14,7 +14,6 @@ public class Ball : MonoBehaviour {
     public float momentumTransferRatio;
     public float wallHitDecay;
     public float airFriction;
-    public int maxDelayFrames;
 
     public LayerMask floorLayerMask;
 
@@ -24,6 +23,8 @@ public class Ball : MonoBehaviour {
     private Dictionary<string, Acceleration> accelerations;
     private Rigidbody2D ballBody;
     private CircleCollider2D collider;
+
+    private int maxDelayFrames;
     private int delayFrames;
     private Vector2 stashVelocity;
 
@@ -40,6 +41,7 @@ public class Ball : MonoBehaviour {
         ballBody = GetComponent<Rigidbody2D>();
         collider = GetComponent<CircleCollider2D>();
 
+        maxDelayFrames = 0;
         delayFrames = maxDelayFrames;
 
         TagNumber = INACTIVE;
@@ -150,6 +152,7 @@ public class Ball : MonoBehaviour {
 
     public void SendFlying(Vector2 velocity)
     {
+        maxDelayFrames = (int) (velocity.magnitude / 5f);
         isFlying = true;
         stashVelocity = velocity;
         ballBody.velocity = Vector2.zero;

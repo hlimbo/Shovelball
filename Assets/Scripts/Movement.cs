@@ -23,8 +23,6 @@ public class Movement : MonoBehaviour
     public int MID_JUMP_FRAMES;
     public int MAX_JUMP_FRAMES;
 
-    public int maxDelayFrames;
-
     public Transform leftGroundCheck;
     public Transform rightGroundCheck;
     public Transform leftWallCheck;
@@ -43,6 +41,8 @@ public class Movement : MonoBehaviour
     private int jumpTimer;
     private int jumpMaxTimer;
 
+
+    private int maxDelayFrames;
     private int delayFrames;
 
     private Vector2 stashVelocity;
@@ -68,6 +68,7 @@ public class Movement : MonoBehaviour
         rbody = GetComponent<Rigidbody2D>();
         trans = GetComponent<Transform>();
 
+        maxDelayFrames = 0;
         delayFrames = maxDelayFrames;
     }
 
@@ -191,6 +192,14 @@ public class Movement : MonoBehaviour
         }
     }
 
+    void OnCollisionEnter2D(Collision2D other)
+    {
+        if (other.gameObject.tag == TagManager.player)
+        {
+            this.Knockback(rbody.velocity.normalized * rbody.velocity.magnitude * -1f, false);
+        }
+    }
+
     void DoJump()
     {
         // Player has jumped?
@@ -257,9 +266,18 @@ public class Movement : MonoBehaviour
         facingRight = Mathf.Sign(previousDirection) < 0;
     }
 
-    public void Knockback(Vector2 velocity)
+    public void Knockback(Vector2 velocity, bool delay = true)
     {
+        maxDelayFrames = maxDelayFrames = (int)(velocity.magnitude / 5f);
         stashVelocity = velocity;
+        rbody.velocity = Vector2.zero;
+        delayFrames = 0;
+    }
+
+    public void Lag(int maxDelay)
+    {
+        maxDelayFrames = maxDelay;
+        stashVelocity = rbody.velocity;
         rbody.velocity = Vector2.zero;
         delayFrames = 0;
     }
