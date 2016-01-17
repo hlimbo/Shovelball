@@ -36,6 +36,8 @@ public class Movement : MonoBehaviour
     public LayerMask ballLayerMask;
 
     public bool facingRight = true;
+    public bool canJump = true;
+    public bool canAttack = true;
 
     private Dictionary<string, Acceleration> accelerations;
     private float previousDirection;
@@ -68,6 +70,7 @@ public class Movement : MonoBehaviour
     void FixedUpdate()
     {
         input = LazyInputManager.GetInput(playerIndex);
+
         // Check if we are grounded.
         bool wasGrounded = anim.GetBool(TagManager.isOnGround);
         bool wasOnWall = anim.GetBool(TagManager.isOnWall);
@@ -115,6 +118,10 @@ public class Movement : MonoBehaviour
 
         // Apply all accelerations.
         rbody.velocity = PhysicsUtility.ApplyAccelerations(rbody.velocity, accelerations.Values);
+
+        // Prevent holding button down from issuing multiple commands
+        canJump = !input.jump;
+        canAttack = !input.attackForward;
     }
 
     private void DoMove()
@@ -157,12 +164,16 @@ public class Movement : MonoBehaviour
                 anim.SetBool(TagManager.isWalking, false);
             }
         }
+        else
+        {
+            anim.SetBool(TagManager.isWalking, false);
+        }
     }
 
     void DoJump()
     {
         // Player has jumped?
-        if (input.jump && (anim.GetBool(TagManager.isOnGround) || anim.GetBool(TagManager.isOnWall) || anim.GetBool(TagManager.isOnBall)) && jumpTimer == jumpMaxTimer)
+        if (input.jump && canJump && jumpTimer == jumpMaxTimer && (anim.GetBool(TagManager.isOnGround) || anim.GetBool(TagManager.isOnWall) || anim.GetBool(TagManager.isOnBall)))
         {
             // Reset jump timer and max frames of jumping
             jumpTimer = 0;
@@ -173,7 +184,6 @@ public class Movement : MonoBehaviour
             {
                 float dir = (facingRight)? 1 : -1;
                 rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, dir * maxMoveSpeed, null);
-                anim.SetBool(TagManager.isOnWall, false);
             }
         }
 
@@ -201,6 +211,7 @@ public class Movement : MonoBehaviour
         // Otherwise, reset
         else
         {
+            canJump = true;
             accelerations["Jump"].maxVelY = null;
             accelerations["Jump"].magnitude = 0.0f;
         }
@@ -208,7 +219,7 @@ public class Movement : MonoBehaviour
 
     private void DoAttack()
     {
-        if (input.attackForward)
+        if (input.attackForward && canAttack)
         {
             anim.SetBool(TagManager.isAttacking, true);
         }
