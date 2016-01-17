@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 public class Movement : MonoBehaviour
 {
+    public int playerIndex;
     public float maxMoveSpeed;
     public float maxAirSpeed;
     public float moveAcceleration;
@@ -45,6 +46,8 @@ public class Movement : MonoBehaviour
     private Rigidbody2D rbody;
     private Transform trans;
 
+    private PlayerInput input;
+
     // Use this for initialization
     void Start()
     {
@@ -64,6 +67,7 @@ public class Movement : MonoBehaviour
     // FixedUpdate is called once per physics step
     void FixedUpdate()
     {
+        input = LazyInputManager.GetInput(playerIndex);
         // Check if we are grounded.
         bool wasGrounded = anim.GetBool(TagManager.isOnGround);
         bool wasOnWall = anim.GetBool(TagManager.isOnWall);
@@ -119,7 +123,7 @@ public class Movement : MonoBehaviour
         if (!anim.GetBool(TagManager.isOnWall) || (anim.GetBool(TagManager.isOnWall) && anim.GetBool(TagManager.isOnGround)))
         {
             // Get the scaled movement direction depending on if grounded or in air.
-            float direction = Input.GetAxisRaw(horizontalAxis);
+            float direction = input.joyStickX;
             direction *= anim.GetBool(TagManager.isOnGround) ? maxMoveSpeed : maxAirSpeed;
 
             float currAcceleration = anim.GetBool(TagManager.isOnGround) ? moveAcceleration : airAcceleration;
@@ -158,9 +162,7 @@ public class Movement : MonoBehaviour
     void DoJump()
     {
         // Player has jumped?
-        if (Input.GetButtonDown(jumpButton)
-            && (anim.GetBool(TagManager.isOnGround) || anim.GetBool(TagManager.isOnWall) || anim.GetBool(TagManager.isOnBall))
-            && jumpTimer == jumpMaxTimer)
+        if (input.jump && (anim.GetBool(TagManager.isOnGround) || anim.GetBool(TagManager.isOnWall) || anim.GetBool(TagManager.isOnBall)) && jumpTimer == jumpMaxTimer)
         {
             // Reset jump timer and max frames of jumping
             jumpTimer = 0;
@@ -169,8 +171,8 @@ public class Movement : MonoBehaviour
             // If jumping from wall, apply horizontal acceleration
             if (anim.GetBool(TagManager.isOnWall) && !anim.GetBool(TagManager.isOnGround))
             {
-                float facing = (facingRight) ? 1 : -1;
-                rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, facing * maxMoveSpeed, null);
+                float dir = (facingRight)? 1 : -1;
+                rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, dir * maxMoveSpeed, null);
                 anim.SetBool(TagManager.isOnWall, false);
             }
         }
@@ -179,7 +181,7 @@ public class Movement : MonoBehaviour
         if (jumpTimer < jumpMaxTimer)
         {
             // If just about to hit jump frame limit, increase limits accordingly
-            if (Input.GetButton(jumpButton) && jumpTimer == jumpMaxTimer - 1)
+            if (input.jump && jumpTimer == jumpMaxTimer - 1)
             {
                 if (jumpMaxTimer == MIN_JUMP_FRAMES)
                     jumpMaxTimer = MID_JUMP_FRAMES;
@@ -206,7 +208,7 @@ public class Movement : MonoBehaviour
 
     private void DoAttack()
     {
-        if (Input.GetButtonDown(attackButton))
+        if (input.attackForward)
         {
             anim.SetBool(TagManager.isAttacking, true);
         }
@@ -220,6 +222,6 @@ public class Movement : MonoBehaviour
     private void Flip()
     {
         trans.localScale = new Vector3(-Mathf.Sign(previousDirection), trans.localScale.y, trans.localScale.z);
-        facingRight = !facingRight;
+        facingRight = Mathf.Sign(previousDirection) < 0;
     }
 }
