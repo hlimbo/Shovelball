@@ -121,6 +121,7 @@ public class Ball : MonoBehaviour {
             {
                 isFlying = false;
                 otherBall.SendFlying(ballBody.velocity.normalized * ballBody.velocity.magnitude * momentumTransferRatio);
+                ballBody.velocity = Vector2.zero;
             }
             // otherwise do normal bounce
             else
