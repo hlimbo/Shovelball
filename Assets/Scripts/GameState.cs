@@ -11,6 +11,7 @@ public class GameState : MonoBehaviour {
     public float timeLeft;
     private int[] scores;
 
+    private BallSpawner bspawner;
 
 	// Use this for initialization
 	void Start () {
@@ -57,7 +58,8 @@ public class GameState : MonoBehaviour {
 
     public void removeBall(Collider2D ball)
     {
-        Destroy(ball.gameObject);
+        bspawner.DisableBall(ball.GetComponent<Ball>());
+        bspawner.activeBallCount--;
     }
 
     private void timerCountdown()
