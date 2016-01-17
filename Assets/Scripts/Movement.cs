@@ -8,6 +8,7 @@ public class Movement : MonoBehaviour
     public float maxAirSpeed;
     public float moveAcceleration;
     public float momentumScale;
+    public float bounceSpeed;
     public float airAcceleration;
     public float maxFallSpeed;
     public float wallSlideSpeed;
@@ -196,7 +197,7 @@ public class Movement : MonoBehaviour
     {
         if (other.gameObject.tag == TagManager.player)
         {
-            this.Knockback(rbody.velocity.normalized * rbody.velocity.magnitude * -1f, false);
+            this.Knockback((rbody.position - other.rigidbody.position).normalized * bounceSpeed, false);
         }
     }
 
