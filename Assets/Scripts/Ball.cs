@@ -72,16 +72,6 @@ public class Ball : MonoBehaviour {
 
 	}
 
-    private void Bounce(Vector2 oldVelocity)
-    {
-        
-    }
-
-    private void Move()
-    {
-
-    }
-
     void OnCollisionEnter2D(Collision2D other)
     {
         //reflections
