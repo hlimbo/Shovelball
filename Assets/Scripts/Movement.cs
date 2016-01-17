@@ -65,7 +65,11 @@ public class Movement : MonoBehaviour
         isGrounded = Physics2D.OverlapCircle(leftGroundCheck.position, checkRadius, floorLayerMask) || Physics2D.OverlapCircle(rightGroundCheck.position, checkRadius, floorLayerMask);
         isOnWall = Physics2D.OverlapCircle(leftWallCheck.position, checkRadius, wallLayerMask) || Physics2D.OverlapCircle(rightWallCheck.position, checkRadius, wallLayerMask);
 
-        // On landing, apply horizontal boost for responsive controls
+        // Set the animator's state values
+        GetComponent<Animator>().SetBool(TagManager.isOnGround, isGrounded);
+        GetComponent<Animator>().SetBool(TagManager.isOnWall, isOnWall);
+
+        // On landing, apply horizontal boost for responsive controls. Also tell animation controller we hit the ground.
         if (isGrounded && (wasGrounded != isGrounded))
         {
             GetComponent<Rigidbody2D>().velocity = PhysicsUtility.SetVelocity(GetComponent<Rigidbody2D>().velocity, GetComponent<Rigidbody2D>().velocity.x * momentumScale, null);
@@ -131,6 +135,7 @@ public class Movement : MonoBehaviour
                 accelerations["Movement"].magnitude = currAcceleration;
 
                 previousDirection = direction;
+                GetComponent<Animator>().SetBool(TagManager.isWalking, true);
             }
             // Player not moving ... apply friction and remove movement influence
             else
@@ -138,6 +143,7 @@ public class Movement : MonoBehaviour
                 accelerations["Friction"].maxVelX = 0.0f;
                 accelerations["Friction"].magnitude = currFriction;
                 accelerations["Movement"].maxVelX = null;
+                GetComponent<Animator>().SetBool(TagManager.isWalking, false);
             }
         }
     }
@@ -153,7 +159,10 @@ public class Movement : MonoBehaviour
 
             // If jumping from wall, apply horizontal acceleration
             if (isOnWall && !isGrounded)
+            {
                 GetComponent<Rigidbody2D>().velocity = PhysicsUtility.SetVelocity(GetComponent<Rigidbody2D>().velocity, GetComponent<Transform>().localScale.x * maxMoveSpeed, null);
+                GetComponent<Animator>().SetBool(TagManager.isOnWall, false);
+            }
         }
 
         // If a jump is in progress, apply acceleration

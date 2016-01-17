@@ -7,4 +7,9 @@
     public static string powerup = "PowerUp";
     public static string platform = "Platform";
     public static string wall = "Wall";
+
+    public static string isWalking = "isWalking";
+    public static string isAttacking = "isAttacking";
+    public static string isOnGround = "isOnGround";
+    public static string isOnWall = "isOnWall";
 }
