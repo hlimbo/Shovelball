@@ -2,14 +2,23 @@
 using System.Collections;
 
 public class Goal : MonoBehaviour {
+    public int assignedPlayer;
 
-	// Use this for initialization
-	void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
+    private GameState gstate;
+
+    void Start()
+    {
+        gstate = Object.FindObjectOfType<GameState>().GetComponent<GameState>();
+    }
+
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if(other.tag == TagManager.ball)
+        {
+            gstate.increaseScore(assignedPlayer);
+            //ThrowFlashyEffects
+            gstate.removeBall(other);
+        }
+    }
 }

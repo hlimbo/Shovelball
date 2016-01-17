@@ -4,19 +4,21 @@ using System.Linq;
 
 public class GameState : MonoBehaviour {
     public int NUM_OF_PLAYERS = 2;
-    public int timeLeft = 90; // in seconds
+    public int gameTime = 90;
 
-    private int[] scores;
+    private int timeLeft;
+    public int[] scores;
+    public int scoreof0viewer;
 
 
 	// Use this for initialization
 	void Start () {
-        scores = Enumerable.Repeat<int>(0, NUM_OF_PLAYERS).ToArray<int>();
+        scores = Enumerable.Repeat(0, NUM_OF_PLAYERS).ToArray();
 	}
 	
 	// Update is called once per frame
-	void Update () {
-	
+	void FixedUpdate () {
+        scoreof0viewer = scores[0];
 	}
 
     public void increaseScore(int player)
@@ -27,6 +29,6 @@ public class GameState : MonoBehaviour {
 
     public void removeBall(Collider2D ball)
     {
-        Destroy(ball);
+        Destroy(ball.gameObject);
     }
 }
