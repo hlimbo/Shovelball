@@ -5,6 +5,7 @@ public class PlayerBallBounds : MonoBehaviour {
 
 
     public GameObject ballSpawner;
+    public GameObject[] players;
     private BallSpawner spawner;
 
     void Start()
@@ -18,6 +19,13 @@ public class PlayerBallBounds : MonoBehaviour {
         {
             Ball ball = other.gameObject.GetComponent<Ball>();
             spawner.DisableBall(ball);      
+        }
+
+        //disable player
+        if(other.gameObject.tag == TagManager.player)
+        {
+            other.GetComponent<Movement>().enabled = false;
+            other.gameObject.SetActive(false);            
         }
     }
 
