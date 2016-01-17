@@ -8,7 +8,7 @@ public class CameraController : MonoBehaviour {
     public float randomIntensity = 10.0f; //how erratic the camera shakes
 
     private Vector3 originPosition;
-    private float shakeLeft = 0.0f;
+    public float shakeLeft = 0.0f;
 
 	// Use this for initialization
 	void Start () {
@@ -16,7 +16,7 @@ public class CameraController : MonoBehaviour {
 	}
 	
 	// Update is called once per frame
-	void FixedUpdate () {
+	void Update () {
         if (shakeLeft > 0)
         {
             //Add perlin noise to the current camera position
@@ -26,22 +26,19 @@ public class CameraController : MonoBehaviour {
 
             transform.position = new Vector3(originPosition.x + shakeX, originPosition.y = shakeY, originPosition.z);
 
-            if (shakeLeft <= 0)
+            if (shakeLeft <= 0.0f)
             {
-                resetCamera();
+                shakeLeft = 0.0f;
             }
         }
-
+        else
+        {
+            transform.position = new Vector3(originPosition.x, originPosition.y, originPosition.z);
+        }
 	}
 
     public void addScreenShake (float shakeAmount) //Call this to begin the screen shaking
     {
         shakeLeft += incrementFactor * shakeAmount;
-    }
-
-    private void resetCamera ()
-    {
-        transform.position = originPosition;
-        shakeLeft = 0.0f;
     }
 }
