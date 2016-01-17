@@ -11,8 +11,10 @@ public class Ball : MonoBehaviour {
     public float flyingThreshold;
     //public float moveAcceleration;
     public float bounciness;
+    public float momentumTransferRatio;
     public float wallHitDecay;
     public float airFriction;
+    public int maxDelayFrames;
 
     public LayerMask floorLayerMask;
 
@@ -22,6 +24,8 @@ public class Ball : MonoBehaviour {
     private Dictionary<string, Acceleration> accelerations;
     private Rigidbody2D ballBody;
     private CircleCollider2D collider;
+    private int delayFrames;
+    private Vector2 stashVelocity;
 
     //useful for ball Pooling
     public int TagNumber { get; set; }
@@ -36,46 +40,59 @@ public class Ball : MonoBehaviour {
         ballBody = GetComponent<Rigidbody2D>();
         collider = GetComponent<CircleCollider2D>();
 
+        delayFrames = maxDelayFrames;
+
         TagNumber = INACTIVE;
     }
 
 	// Update is called once per frame
 	void FixedUpdate ()
     {
-        //detect what the ball hits using physics engine.
-        isGrounded = Physics2D.OverlapCircle(ballBody.position, collider.radius, floorLayerMask);
-        //isOnWall = Physics2D.OverlapCircle(leftWallCheck.position, checkRadius, wallLayerMask)
-        //    || Physics2D.OverlapCircle(rightWallCheck.position, checkRadius, wallLayerMask);
-
-        if (ballBody.velocity.magnitude < flyingThreshold)
+        if (delayFrames == maxDelayFrames)
         {
-            isFlying = false;
+            
+            //detect what the ball hits using physics engine.
+            isGrounded = Physics2D.OverlapCircle(ballBody.position, collider.radius, floorLayerMask);
+
+            if (ballBody.velocity.magnitude < flyingThreshold)
+            {
+                isFlying = false;
+            }
+
+            // gravity
+            if (isGrounded || isFlying)
+            {
+                accelerations["Gravity"].maxVelY = null;
+            }
+            else
+            {
+                accelerations["Gravity"].maxVelY = maxFallSpeed;
+            }
+
+
+            // airdrag
+            if (isFlying)
+            {
+                accelerations["Friction"].maxVelX = 0.0f;
+                accelerations["Friction"].maxVelY = 0.0f;
+            }
+            else
+            {
+                accelerations["Friction"].maxVelX = null;
+                accelerations["Friction"].maxVelY = null;
+            }
+
+            ballBody.velocity = PhysicsUtility.ApplyAccelerations(ballBody.velocity, accelerations.Values);
         }
-
-        // gravity
-        if (isGrounded || isFlying)
+        else if (delayFrames == maxDelayFrames - 1)
         {
-            accelerations["Gravity"].maxVelY = null;
+            ballBody.velocity = stashVelocity;
+            delayFrames++;
         }
         else
         {
-            accelerations["Gravity"].maxVelY = maxFallSpeed;
+            delayFrames++;
         }
-
-
-        // airdrag
-        if (isFlying)
-        {
-            accelerations["Friction"].maxVelX = 0.0f;
-            accelerations["Friction"].maxVelY = 0.0f;
-        }
-        else
-        {
-            accelerations["Friction"].maxVelX = null;
-            accelerations["Friction"].maxVelY = null;
-        }
-
-        ballBody.velocity = PhysicsUtility.ApplyAccelerations(ballBody.velocity, accelerations.Values);
 	}
 
     void OnCollisionEnter2D(Collision2D other)
@@ -95,29 +112,21 @@ public class Ball : MonoBehaviour {
             }
         }
 
-        // Ball-ball collision
+        // Ball-ball collision, only handle getting hit.
         if (other.gameObject.tag == TagManager.ball)
         {
             // if flying, do special stuff
             Ball otherBall = other.gameObject.GetComponent<Ball>();
             if (isFlying)
             {
-                if (otherBall.isFlying)
-                {
-                    other.rigidbody.velocity = ballBody.velocity;
-                    ballBody.velocity = ballBody.velocity.normalized * ballBody.velocity.magnitude * -1f;
-                }
-                else
-                {
-                    isFlying = false;
-                    otherBall.SendFlying(ballBody.velocity);
-                    ballBody.velocity = new Vector2(0f, 0f);
-                }
+                isFlying = false;
+                otherBall.SendFlying(ballBody.velocity.normalized * ballBody.velocity.magnitude * momentumTransferRatio);
+                ballBody.velocity = Vector2.zero;
             }
             // otherwise do normal bounce
-            else if (!otherBall.isFlying)
+            else
             {
-                ballBody.velocity = Vector2.Reflect(ballBody.velocity.normalized * ballBody.velocity.magnitude * bounciness, other.contacts[0].normal);
+                ballBody.velocity = Vector2.Reflect(ballBody.velocity.normalized * ballBody.velocity.magnitude * momentumTransferRatio, other.contacts[0].normal);
             }
         }
         
@@ -130,8 +139,8 @@ public class Ball : MonoBehaviour {
     public void SendFlying(Vector2 velocity)
     {
         isFlying = true;
-        ballBody.velocity = velocity;
+        stashVelocity = velocity;
+        ballBody.velocity = Vector2.zero;
+        delayFrames = 0;
     }
-
-
 }
