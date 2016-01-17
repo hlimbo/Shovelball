@@ -112,23 +112,18 @@ public class Ball : MonoBehaviour {
             }
         }
 
-        // Ball-ball collision, only handle hitting.
+        // Ball-ball collision, only handle getting hit.
         if (other.gameObject.tag == TagManager.ball)
         {
             // if flying, do special stuff
             Ball otherBall = other.gameObject.GetComponent<Ball>();
             if (isFlying)
             {
-                // MUST USE SENDFLYING. Don't need to send myself flying, it will reciprocate
-                if (!otherBall.isFlying)
-                {
-                    isFlying = false;
-                    ballBody.velocity = new Vector2(0f, 0f);
-                }
+                isFlying = false;
                 otherBall.SendFlying(ballBody.velocity.normalized * ballBody.velocity.magnitude * momentumTransferRatio);
             }
             // otherwise do normal bounce
-            else if (!otherBall.isFlying)
+            else
             {
                 ballBody.velocity = Vector2.Reflect(ballBody.velocity.normalized * ballBody.velocity.magnitude * momentumTransferRatio, other.contacts[0].normal);
             }
