@@ -85,15 +85,16 @@ public class Movement : MonoBehaviour
         {
             rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, rbody.velocity.x * momentumScale, null);
         }
-        
+
         // On hitting a wall, apply horizontal momentum to vertical momentum
         if (anim.GetBool(TagManager.isOnWall) && (wasOnWall != anim.GetBool(TagManager.isOnWall)))
         {
             float ysign = Mathf.Sign(rbody.velocity.y);
+            float xsign = Mathf.Sign(rbody.velocity.x);
             if (ysign > 0.0f)
-                rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, 0.0f, rbody.velocity.magnitude * ysign);
+                rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, xsign * 5.0f, rbody.velocity.magnitude * ysign);
             else
-                rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, 0.0f, 0.0f);
+                rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, xsign * 5.0f, 0.0f);
 
             // flip character
             Flip();
@@ -182,7 +183,7 @@ public class Movement : MonoBehaviour
             // If jumping from wall, apply horizontal acceleration
             if (anim.GetBool(TagManager.isOnWall) && !anim.GetBool(TagManager.isOnGround))
             {
-                float dir = (facingRight)? 1 : -1;
+                float dir = (facingRight) ? 1 : -1;
                 rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, dir * maxMoveSpeed, null);
             }
         }
@@ -232,7 +233,7 @@ public class Movement : MonoBehaviour
 
     private void Flip()
     {
-        trans.localScale = new Vector3(-Mathf.Sign(previousDirection), trans.localScale.y, trans.localScale.z);
+        trans.localScale = new Vector3(Mathf.Sign(previousDirection), trans.localScale.y, trans.localScale.z);
         facingRight = Mathf.Sign(previousDirection) < 0;
     }
 }
