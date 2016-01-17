@@ -23,6 +23,7 @@ public class Movement : MonoBehaviour
     public int MAX_JUMP_FRAMES;
     public string jumpButton;
     public string horizontalAxis;
+    public string attackButton;
 
     public Transform leftGroundCheck;
     public Transform rightGroundCheck;
@@ -32,15 +33,16 @@ public class Movement : MonoBehaviour
     public LayerMask floorLayerMask;
     public LayerMask wallLayerMask;
 
-    public bool isGrounded;
-    public bool isOnWall;
-    public bool isJumping;
     public bool facingRight = true;
 
     private Dictionary<string, Acceleration> accelerations;
     private float previousDirection;
     private int jumpTimer;
     private int jumpMaxTimer;
+
+    private Animator anim;
+    private Rigidbody2D rbody;
+    private Transform trans;
 
     // Use this for initialization
     void Start()
@@ -53,43 +55,47 @@ public class Movement : MonoBehaviour
 
         jumpTimer = MIN_JUMP_FRAMES;
         jumpMaxTimer = MIN_JUMP_FRAMES;
+        anim = GetComponent<Animator>();
+        rbody = GetComponent<Rigidbody2D>();
+        trans = GetComponent<Transform>();
     }
 
     // FixedUpdate is called once per physics step
     void FixedUpdate()
     {
         // Check if we are grounded.
-        bool wasGrounded = isGrounded;
-        bool wasOnWall = isOnWall;
+        bool wasGrounded = anim.GetBool(TagManager.isOnGround);
+        bool wasOnWall = anim.GetBool(TagManager.isOnWall);
+
         // Combine platform and floor masks for grounded mask
-        isGrounded = Physics2D.OverlapCircle(leftGroundCheck.position, checkRadius, floorLayerMask) || Physics2D.OverlapCircle(rightGroundCheck.position, checkRadius, floorLayerMask);
-        isOnWall = Physics2D.OverlapCircle(leftWallCheck.position, checkRadius, wallLayerMask) || Physics2D.OverlapCircle(rightWallCheck.position, checkRadius, wallLayerMask);
+        bool isGrounded = Physics2D.OverlapCircle(leftGroundCheck.position, checkRadius, floorLayerMask) || Physics2D.OverlapCircle(rightGroundCheck.position, checkRadius, floorLayerMask);
+        bool isOnWall = Physics2D.OverlapCircle(leftWallCheck.position, checkRadius, wallLayerMask) || Physics2D.OverlapCircle(rightWallCheck.position, checkRadius, wallLayerMask);
 
         // Set the animator's state values
-        GetComponent<Animator>().SetBool(TagManager.isOnGround, isGrounded);
-        GetComponent<Animator>().SetBool(TagManager.isOnWall, isOnWall);
+        anim.SetBool(TagManager.isOnGround, isGrounded);
+        anim.SetBool(TagManager.isOnWall, isOnWall);
 
         // On landing, apply horizontal boost for responsive controls. Also tell animation controller we hit the ground.
         if (isGrounded && (wasGrounded != isGrounded))
         {
-            GetComponent<Rigidbody2D>().velocity = PhysicsUtility.SetVelocity(GetComponent<Rigidbody2D>().velocity, GetComponent<Rigidbody2D>().velocity.x * momentumScale, null);
+            rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, rbody.velocity.x * momentumScale, null);
         }
         
         // On hitting a wall, apply horizontal momentum to vertical momentum
         if (isOnWall && (wasOnWall != isOnWall))
         {
-            float ysign = Mathf.Sign(GetComponent<Rigidbody2D>().velocity.y);
+            float ysign = Mathf.Sign(rbody.velocity.y);
             if (ysign > 0.0f)
-                GetComponent<Rigidbody2D>().velocity = PhysicsUtility.SetVelocity(GetComponent<Rigidbody2D>().velocity, 0.0f, GetComponent<Rigidbody2D>().velocity.magnitude * ysign);
+                rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, 0.0f, rbody.velocity.magnitude * ysign);
             else
-                GetComponent<Rigidbody2D>().velocity = PhysicsUtility.SetVelocity(GetComponent<Rigidbody2D>().velocity, 0.0f, 0.0f);
+                rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, 0.0f, 0.0f);
 
             // flip character
             Flip();
         }
 
         // Disable gravity if needed
-        if (isGrounded || isJumping)
+        if (isGrounded)
             accelerations["Gravity"].maxVelY = null;
         else if (isOnWall)
             accelerations["Gravity"].maxVelY = wallSlideSpeed;
@@ -102,22 +108,25 @@ public class Movement : MonoBehaviour
         // Apply jump.
         DoJump();
 
+        // Apply attack.
+        DoAttack();
+
         // Apply all accelerations.
-        GetComponent<Rigidbody2D>().velocity = PhysicsUtility.ApplyAccelerations(GetComponent<Rigidbody2D>().velocity, accelerations.Values);
+        rbody.velocity = PhysicsUtility.ApplyAccelerations(rbody.velocity, accelerations.Values);
     }
 
     private void DoMove()
     {
         // Can't move while wall-hugging
-        if (!isOnWall || (isOnWall && isGrounded))
+        if (!anim.GetBool(TagManager.isOnWall) || (anim.GetBool(TagManager.isOnWall) && anim.GetBool(TagManager.isOnGround)))
         {
             // Get the scaled movement direction depending on if grounded or in air.
             float direction = Input.GetAxisRaw(horizontalAxis);
-            direction *= isGrounded ? maxMoveSpeed : maxAirSpeed;
+            direction *= anim.GetBool(TagManager.isOnGround) ? maxMoveSpeed : maxAirSpeed;
 
-            float currAcceleration = isGrounded ? moveAcceleration : airAcceleration;
-            float currPivotSpeedRetention = isGrounded ? groundPivotSpeedRetention : airPivotSpeedRetention;
-            float currFriction = isGrounded ? groundFriction : airFriction;
+            float currAcceleration = anim.GetBool(TagManager.isOnGround) ? moveAcceleration : airAcceleration;
+            float currPivotSpeedRetention = anim.GetBool(TagManager.isOnGround) ? groundPivotSpeedRetention : airPivotSpeedRetention;
+            float currFriction = anim.GetBool(TagManager.isOnGround) ? groundFriction : airFriction;
 
             // If the player is moving ...
             if (direction != 0)
@@ -125,7 +134,7 @@ public class Movement : MonoBehaviour
                 // If the player's direction changed, set horizontal velocity to half. For responsiveness.
                 if (Mathf.Sign(previousDirection) != Mathf.Sign(direction))
                 {
-                    GetComponent<Rigidbody2D>().velocity = PhysicsUtility.SetVelocity(GetComponent<Rigidbody2D>().velocity, GetComponent<Rigidbody2D>().velocity.x * currPivotSpeedRetention, null);
+                    rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, rbody.velocity.x * currPivotSpeedRetention, null);
                     Flip();
                 }
 
@@ -135,7 +144,7 @@ public class Movement : MonoBehaviour
                 accelerations["Movement"].magnitude = currAcceleration;
 
                 previousDirection = direction;
-                GetComponent<Animator>().SetBool(TagManager.isWalking, true);
+                anim.SetBool(TagManager.isWalking, true);
             }
             // Player not moving ... apply friction and remove movement influence
             else
@@ -143,7 +152,7 @@ public class Movement : MonoBehaviour
                 accelerations["Friction"].maxVelX = 0.0f;
                 accelerations["Friction"].magnitude = currFriction;
                 accelerations["Movement"].maxVelX = null;
-                GetComponent<Animator>().SetBool(TagManager.isWalking, false);
+                anim.SetBool(TagManager.isWalking, false);
             }
         }
     }
@@ -151,25 +160,23 @@ public class Movement : MonoBehaviour
     void DoJump()
     {
         // Player has jumped?
-        if (Input.GetButtonDown(jumpButton) && (isGrounded || isOnWall) && jumpTimer == jumpMaxTimer)
+        if (Input.GetButtonDown(jumpButton) && (anim.GetBool(TagManager.isOnGround) || anim.GetBool(TagManager.isOnWall)) && jumpTimer == jumpMaxTimer)
         {
             // Reset jump timer and max frames of jumping
             jumpTimer = 0;
             jumpMaxTimer = MIN_JUMP_FRAMES;
 
             // If jumping from wall, apply horizontal acceleration
-            if (isOnWall && !isGrounded)
+            if (anim.GetBool(TagManager.isOnWall) && !anim.GetBool(TagManager.isOnGround))
             {
-                GetComponent<Rigidbody2D>().velocity = PhysicsUtility.SetVelocity(GetComponent<Rigidbody2D>().velocity, GetComponent<Transform>().localScale.x * maxMoveSpeed, null);
-                GetComponent<Animator>().SetBool(TagManager.isOnWall, false);
+                rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, trans.localScale.x * maxMoveSpeed, null);
+                anim.SetBool(TagManager.isOnWall, false);
             }
         }
 
         // If a jump is in progress, apply acceleration
         if (jumpTimer < jumpMaxTimer)
         {
-            isJumping = true;
-
             // If just about to hit jump frame limit, increase limits accordingly
             if (Input.GetButton(jumpButton) && jumpTimer == jumpMaxTimer - 1)
             {
@@ -189,17 +196,29 @@ public class Movement : MonoBehaviour
             jumpTimer++;
         }
         // Otherwise, reset
-        else if (isJumping)
+        else
         {
-            isJumping = false;
             accelerations["Jump"].maxVelY = null;
             accelerations["Jump"].magnitude = 0.0f;
         }
     }
 
+    private void DoAttack()
+    {
+        if (Input.GetButtonDown(attackButton))
+        {
+            anim.SetBool(TagManager.isAttacking, true);
+        }
+    }
+
+    public void ClearAttack()
+    {
+        anim.SetBool(TagManager.isAttacking, false);
+    }
+
     private void Flip()
     {
-        GetComponent<Transform>().localScale = new Vector3(-Mathf.Sign(previousDirection), GetComponent<Transform>().localScale.y, GetComponent<Transform>().localScale.z);
+        trans.localScale = new Vector3(-Mathf.Sign(previousDirection), trans.localScale.y, trans.localScale.z);
         facingRight = !facingRight;
     }
 }
