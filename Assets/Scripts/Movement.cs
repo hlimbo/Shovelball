@@ -23,6 +23,8 @@ public class Movement : MonoBehaviour
     public int MID_JUMP_FRAMES;
     public int MAX_JUMP_FRAMES;
 
+    public int maxDelayFrames;
+
     public Transform leftGroundCheck;
     public Transform rightGroundCheck;
     public Transform leftWallCheck;
@@ -40,6 +42,10 @@ public class Movement : MonoBehaviour
     private float previousDirection = -1;
     private int jumpTimer;
     private int jumpMaxTimer;
+
+    private int delayFrames;
+
+    private Vector2 stashVelocity;
 
     private Animator anim;
     private Rigidbody2D rbody;
@@ -61,67 +67,81 @@ public class Movement : MonoBehaviour
         anim = GetComponent<Animator>();
         rbody = GetComponent<Rigidbody2D>();
         trans = GetComponent<Transform>();
+
+        delayFrames = maxDelayFrames;
     }
 
     // FixedUpdate is called once per physics step
     void FixedUpdate()
     {
-        input = LazyInputManager.GetInput(playerIndex);
-
-        // Check if we are grounded.
-        bool wasGrounded = anim.GetBool(TagManager.isOnGround);
-        bool wasOnWall = anim.GetBool(TagManager.isOnWall);
-
-        // Set the animator's state values
-        anim.SetBool(TagManager.isOnGround, Physics2D.OverlapCircle(leftGroundCheck.position, checkRadius, floorLayerMask) || Physics2D.OverlapCircle(rightGroundCheck.position, checkRadius, floorLayerMask));
-        anim.SetBool(TagManager.isOnWall, Physics2D.OverlapCircle(leftWallCheck.position, checkRadius, wallLayerMask) || Physics2D.OverlapCircle(rightWallCheck.position, checkRadius, wallLayerMask));
-        anim.SetBool(TagManager.isOnBall, Physics2D.OverlapCircle(leftGroundCheck.position, checkRadius, ballLayerMask) || Physics2D.OverlapCircle(rightGroundCheck.position, checkRadius, ballLayerMask));
-
-        // On landing, apply horizontal boost for responsive controls. Also tell animation controller we hit the ground.
-        if (anim.GetBool(TagManager.isOnGround) && (wasGrounded != anim.GetBool(TagManager.isOnGround)))
+        if (delayFrames == maxDelayFrames)
         {
-            rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, rbody.velocity.x * momentumScale, null);
-        }
+            input = LazyInputManager.GetInput(playerIndex);
 
-        // Disable gravity if needed
-        if (anim.GetBool(TagManager.isOnGround))
-            accelerations["Gravity"].maxVelY = null;
-        else if (anim.GetBool(TagManager.isOnWall))
-            accelerations["Gravity"].maxVelY = wallSlideSpeed;
-        else
-            accelerations["Gravity"].maxVelY = maxFallSpeed;
+            // Check if we are grounded.
+            bool wasGrounded = anim.GetBool(TagManager.isOnGround);
+            bool wasOnWall = anim.GetBool(TagManager.isOnWall);
 
-        // Apply movement.
-        DoMove();
+            // Set the animator's state values
+            anim.SetBool(TagManager.isOnGround, Physics2D.OverlapCircle(leftGroundCheck.position, checkRadius, floorLayerMask) || Physics2D.OverlapCircle(rightGroundCheck.position, checkRadius, floorLayerMask));
+            anim.SetBool(TagManager.isOnWall, Physics2D.OverlapCircle(leftWallCheck.position, checkRadius, wallLayerMask) || Physics2D.OverlapCircle(rightWallCheck.position, checkRadius, wallLayerMask));
+            anim.SetBool(TagManager.isOnBall, Physics2D.OverlapCircle(leftGroundCheck.position, checkRadius, ballLayerMask) || Physics2D.OverlapCircle(rightGroundCheck.position, checkRadius, ballLayerMask));
 
-        // On hitting a wall, apply horizontal momentum to vertical momentum
-        // Need to do it here in case the player flipped in DoMove()
-        if (anim.GetBool(TagManager.isOnWall) && (wasOnWall != anim.GetBool(TagManager.isOnWall)))
-        {
-            float ysign = Mathf.Sign(rbody.velocity.y);
-            float xsign = Mathf.Sign(rbody.velocity.x);
-            if (ysign > 0.0f)
-                rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, xsign * 5.0f, rbody.velocity.magnitude * ysign);
+            // On landing, apply horizontal boost for responsive controls. Also tell animation controller we hit the ground.
+            if (anim.GetBool(TagManager.isOnGround) && (wasGrounded != anim.GetBool(TagManager.isOnGround)))
+            {
+                rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, rbody.velocity.x * momentumScale, null);
+            }
+
+            // Disable gravity if needed
+            if (anim.GetBool(TagManager.isOnGround))
+                accelerations["Gravity"].maxVelY = null;
+            else if (anim.GetBool(TagManager.isOnWall))
+                accelerations["Gravity"].maxVelY = wallSlideSpeed;
             else
-                rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, xsign * 5.0f, 0.0f);
+                accelerations["Gravity"].maxVelY = maxFallSpeed;
 
-            // flip character
-            Flip();
-            previousDirection = -previousDirection;
+            // Apply movement.
+            DoMove();
+
+            // On hitting a wall, apply horizontal momentum to vertical momentum
+            // Need to do it here in case the player flipped in DoMove()
+            if (anim.GetBool(TagManager.isOnWall) && (wasOnWall != anim.GetBool(TagManager.isOnWall)))
+            {
+                float ysign = Mathf.Sign(rbody.velocity.y);
+                float xsign = Mathf.Sign(rbody.velocity.x);
+                if (ysign > 0.0f)
+                    rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, xsign * 5.0f, rbody.velocity.magnitude * ysign);
+                else
+                    rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, xsign * 5.0f, 0.0f);
+
+                // flip character
+                Flip();
+                previousDirection = -previousDirection;
+            }
+
+            // Apply jump.
+            DoJump();
+
+            // Apply attack.
+            DoAttack();
+
+            // Apply all accelerations.
+            rbody.velocity = PhysicsUtility.ApplyAccelerations(rbody.velocity, accelerations.Values);
+
+            // Prevent holding button down from issuing multiple commands
+            canJump = !input.jump;
+            canAttack = !input.attackForward;
         }
-
-        // Apply jump.
-        DoJump();
-
-        // Apply attack.
-        DoAttack();
-
-        // Apply all accelerations.
-        rbody.velocity = PhysicsUtility.ApplyAccelerations(rbody.velocity, accelerations.Values);
-
-        // Prevent holding button down from issuing multiple commands
-        canJump = !input.jump;
-        canAttack = !input.attackForward;
+        else if (delayFrames == maxDelayFrames - 1)
+        {
+            rbody.velocity = stashVelocity;
+            delayFrames++;
+        }
+        else
+        {
+            delayFrames++;
+        }
     }
 
     private void DoMove()
@@ -235,5 +255,12 @@ public class Movement : MonoBehaviour
     {
         trans.localScale = new Vector3(Mathf.Sign(previousDirection), trans.localScale.y, trans.localScale.z);
         facingRight = Mathf.Sign(previousDirection) < 0;
+    }
+
+    public void Knockback(Vector2 velocity)
+    {
+        stashVelocity = velocity;
+        rbody.velocity = Vector2.zero;
+        delayFrames = 0;
     }
 }

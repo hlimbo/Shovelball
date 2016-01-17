@@ -131,8 +131,20 @@ public class Ball : MonoBehaviour {
         }
         
         // Ball-player collision
-        {
-
+        if (other.gameObject.tag == TagManager.player){
+            // if flying, transfer momentum to player
+            Movement player = other.gameObject.GetComponent<Movement>();
+            if (isFlying)
+            {
+                isFlying = false;
+                player.Knockback(ballBody.velocity.normalized * ballBody.velocity.magnitude * momentumTransferRatio);
+                ballBody.velocity = Vector2.zero;
+            }
+            // otherwise do normal bounce
+            else
+            {
+                ballBody.velocity = Vector2.Reflect(ballBody.velocity.normalized * ballBody.velocity.magnitude * momentumTransferRatio, other.contacts[0].normal);
+            }
         }
     }
 
