@@ -31,50 +31,72 @@ public class Ball : MonoBehaviour {
         accelerations.Add("Jump", new Acceleration(null, null, 0.0f));
 
         ballBody = GetComponent<Rigidbody2D>();
-
     }
-	
+
+
+    void Update()
+    {
+   
+    }
+
+
 	// Update is called once per frame
 	void FixedUpdate ()
     {
         Vector2 oldVelocity = ballBody.velocity;
-        bool wasGrounded = isGrounded;
-        bool wasOnWall = isOnWall;
 
+
+        //detect what the ball hits using physics engine.
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, checkRadius, floorLayerMask);
         isOnWall = Physics2D.OverlapCircle(leftWallCheck.position, checkRadius, wallLayerMask)
             || Physics2D.OverlapCircle(rightWallCheck.position, checkRadius, wallLayerMask);
 
+        //bounce
         if (isGrounded)
         {
-            //accelerations["Gravity"].maxVelY = null;
-            ballBody.velocity = PhysicsUtility.SetVelocity(ballBody.velocity,null, maxMoveSpeed);
-            
+            //apply upward acceleration here
+            ballBody.velocity = PhysicsUtility.SetVelocity(ballBody.velocity, null, maxMoveSpeed);
+
             oldVelocity = ballBody.velocity;
         }
         else
         {
             //apply gravity here
-            //accelerations["Gravity"].maxVelY = maxFallSpeed;
             ballBody.velocity = PhysicsUtility.SetVelocity(ballBody.velocity, null, maxFallSpeed);
-         
-           // oldVelocity = ballBody.velocity;
-
         }
+
+      
 
         ballBody.velocity = PhysicsUtility.ApplyAccelerations(oldVelocity, accelerations.Values);
 
 
 	}
 
-    private void Bounce()
+    private void Bounce(Vector2 oldVelocity)
     {
+        
     }
 
     private void Move()
     {
 
     }
+
+    void OnCollisionEnter2D(Collision2D other)
+    {
+        //reflections
+        if (other.gameObject.tag == TagManager.wall
+            || other.gameObject.tag == TagManager.platform 
+            || other.gameObject.tag == TagManager.player 
+            || other.gameObject.tag == TagManager.ball)
+        {
+            Vector2 CollNorm = other.contacts[0].normal;
+            ballBody.velocity = Vector2.Reflect(ballBody.velocity, CollNorm);
+        }
+
+
+    }
+
 
    
 
