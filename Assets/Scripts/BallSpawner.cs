@@ -7,13 +7,15 @@ public class BallSpawner : MonoBehaviour {
     public static List<Ball> ballList;
     public Ball ballPrefab;
     public int maxBallCount;
+    public int minBallCount;
 
     //controls
     public float xLaunchVelocity;
     public float yLaunchVelocity;
     public float LaunchDelay;
 
-    private bool coroutinesDone;
+    public int activeBallCount;
+
 
     private void GeneratePool()
     {
@@ -37,6 +39,7 @@ public class BallSpawner : MonoBehaviour {
         ball.enabled = true;
         ball.gameObject.SetActive(true);
         ball.gameObject.transform.position = this.transform.position;
+        activeBallCount++;
     }
 
 
@@ -46,33 +49,37 @@ public class BallSpawner : MonoBehaviour {
         ball.gameObject.SetActive(false);
         ball.gameObject.transform.position = Vector2.zero;
         ball.TagNumber = Ball.INACTIVE;
+        activeBallCount--;
+
+        //zero out velocity.
+        Rigidbody2D rb = ball.gameObject.GetComponent<Rigidbody2D>();
+        rb.velocity = Vector2.zero;
+
     }
 
     public bool IsBallDisabled(Ball ball)
     {
-        return ball.enabled == false || ball.gameObject.activeInHierarchy == false;
+        return  ball.gameObject.activeInHierarchy == false;
     }
 
-    private void SetBallVelocity(Ball ball, float? x, float? y)
+    public void SetBallVelocity(Ball ball, float? x, float? y)
     {
         Rigidbody2D rb = ball.gameObject.GetComponent<Rigidbody2D>();
-        rb.velocity = PhysicsUtility.SetVelocity(rb.velocity, x,y);
+        if(rb.velocity == Vector2.zero)
+            rb.velocity = PhysicsUtility.SetVelocity(rb.velocity, x,y);
     }
 
-    public IEnumerator SpawnBall(Ball ball, float waitTime)
-    {
-        ActivateBall(ball);
-        yield return new WaitForSeconds(waitTime);
-    }
-
-
+// =============== use when game starts only =================== //
     private IEnumerator SpawnBalls(float waitTime)
     {
-        foreach(Ball b in ballList)
+        foreach (Ball b in ballList)
         {
-            ActivateBall(b);
-            yield return new WaitForSeconds(waitTime);
-        }        
+            if (IsBallDisabled(b))
+            {
+                ActivateBall(b);
+                yield return new WaitForSeconds(waitTime);
+            }
+        }
     }
 
     private IEnumerator ApplyVelocities(float waitTime,float? x,float? y)
@@ -83,48 +90,49 @@ public class BallSpawner : MonoBehaviour {
             yield return new WaitForSeconds(waitTime);
         }
     }
+// ===================================================================  //
 
-    private IEnumerator Delay(float waitTime)
+   //use when you want balls spawning in clusters.
+    private void LaunchBall()
     {
-        yield return new WaitForSeconds(waitTime);
+
+        foreach (Ball b in ballList)
+        {
+            if (IsBallDisabled(b))
+            {
+                ActivateBall(b);
+                SetBallVelocity(b, xLaunchVelocity, yLaunchVelocity);
+                return;
+            }
+
+        }
     }
-
-
 
 
     void Awake()
     {
         GeneratePool();
-        coroutinesDone = false;
-        //Debug.Log(ballList.Count);
+        activeBallCount = 0;
     }
 
     // Use this for initialization
     void Start()
     {
-        StartCoroutine(SpawnBalls(LaunchDelay));
-        StartCoroutine(ApplyVelocities(LaunchDelay,xLaunchVelocity,yLaunchVelocity));
-        coroutinesDone = true;
+        //StartCoroutine(SpawnBalls(LaunchDelay));
+  
 
     }
 
     void Update()
     {
-        //if disabled balls
-        //if (coroutinesDone)
-        //{
-        //    foreach (Ball ball in ballList)
-        //    {
-        //        if (IsBallDisabled(ball))
-        //        {
-        //            Delay(LaunchDelay);
-        //            ActivateBall(ball);
-        //            SetBallVelocity(ball, xLaunchVelocity, yLaunchVelocity);
-        //        }
-        //    }
-        //}
+        Debug.Log("Active ball count: " + activeBallCount);
+        InvokeRepeating("LaunchBall", 0.1f,LaunchDelay);
 
-        
+        //if(activeBallCount <= 0)
+        //{
+        //    StartCoroutine(SpawnBalls(LaunchDelay));
+        //    StartCoroutine(ApplyVelocities(LaunchDelay, xLaunchVelocity, yLaunchVelocity));
+        //}
 
     }
 

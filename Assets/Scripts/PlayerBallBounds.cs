@@ -21,16 +21,7 @@ public class PlayerBallBounds : MonoBehaviour {
         }
     }
 
-    void OnTriggerEnter2D(Collider2D other)
-    {
-       
 
-        if(other.gameObject.tag == TagManager.ball)
-        {
-            //ballSpawner.
-            //StartCoroutine(,2.0f));
-        }
-    }
 	
 
 }
