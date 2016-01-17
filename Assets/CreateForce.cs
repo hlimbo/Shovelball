@@ -5,6 +5,7 @@ public class CreateForce : MonoBehaviour
 {
     public float power;
     public Vector2 direction;
+    public Transform hitSource;
     public Movement movement;
     public bool useCollisionAngle;
     
@@ -17,7 +18,9 @@ public class CreateForce : MonoBehaviour
             float whichDirection = -1f;
 
             if (useCollisionAngle)
-                forceVector = (other.transform.position - GetComponent<Transform>().position).normalized * power;
+            {
+                forceVector = (other.transform.position - hitSource.position).normalized * power;
+            }
 
             if (movement != null && movement.facingRight)
                 whichDirection = 1f;

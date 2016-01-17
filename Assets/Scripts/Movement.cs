@@ -37,7 +37,7 @@ public class Movement : MonoBehaviour
     public bool canAttack = true;
 
     private Dictionary<string, Acceleration> accelerations;
-    private float previousDirection;
+    private float previousDirection = -1;
     private int jumpTimer;
     private int jumpMaxTimer;
 
@@ -83,7 +83,19 @@ public class Movement : MonoBehaviour
             rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, rbody.velocity.x * momentumScale, null);
         }
 
+        // Disable gravity if needed
+        if (anim.GetBool(TagManager.isOnGround))
+            accelerations["Gravity"].maxVelY = null;
+        else if (anim.GetBool(TagManager.isOnWall))
+            accelerations["Gravity"].maxVelY = wallSlideSpeed;
+        else
+            accelerations["Gravity"].maxVelY = maxFallSpeed;
+
+        // Apply movement.
+        DoMove();
+
         // On hitting a wall, apply horizontal momentum to vertical momentum
+        // Need to do it here in case the player flipped in DoMove()
         if (anim.GetBool(TagManager.isOnWall) && (wasOnWall != anim.GetBool(TagManager.isOnWall)))
         {
             float ysign = Mathf.Sign(rbody.velocity.y);
@@ -96,17 +108,6 @@ public class Movement : MonoBehaviour
             // flip character
             Flip();
         }
-
-        // Disable gravity if needed
-        if (anim.GetBool(TagManager.isOnGround))
-            accelerations["Gravity"].maxVelY = null;
-        else if (anim.GetBool(TagManager.isOnWall))
-            accelerations["Gravity"].maxVelY = wallSlideSpeed;
-        else
-            accelerations["Gravity"].maxVelY = maxFallSpeed;
-
-        // Apply movement.
-        DoMove();
 
         // Apply jump.
         DoJump();
@@ -154,8 +155,11 @@ public class Movement : MonoBehaviour
                 anim.SetBool(TagManager.isWalking, true);
             }
             // Player not moving ... apply friction and remove movement influence
+            // Also, need to keep track of flipping
             else
             {
+                if (rbody.velocity.x != 0)
+                    previousDirection = rbody.velocity.x;
                 accelerations["Friction"].maxVelX = 0.0f;
                 accelerations["Friction"].magnitude = currFriction;
                 accelerations["Movement"].maxVelX = null;
