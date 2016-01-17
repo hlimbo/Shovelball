@@ -61,6 +61,7 @@ public class Movement : MonoBehaviour
         // Check if we are grounded.
         bool wasGrounded = isGrounded;
         bool wasOnWall = isOnWall;
+        // Combine platform and floor masks for grounded mask
         isGrounded = Physics2D.OverlapCircle(leftGroundCheck.position, checkRadius, floorLayerMask) || Physics2D.OverlapCircle(rightGroundCheck.position, checkRadius, floorLayerMask);
         isOnWall = Physics2D.OverlapCircle(leftWallCheck.position, checkRadius, wallLayerMask) || Physics2D.OverlapCircle(rightWallCheck.position, checkRadius, wallLayerMask);
 
@@ -179,7 +180,7 @@ public class Movement : MonoBehaviour
             jumpTimer++;
         }
         // Otherwise, reset
-        else
+        else if (isJumping)
         {
             isJumping = false;
             accelerations["Jump"].maxVelY = null;
