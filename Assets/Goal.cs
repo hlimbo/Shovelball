@@ -5,10 +5,12 @@ public class Goal : MonoBehaviour {
     public int assignedPlayer;
 
     private GameState gstate;
+    private CameraController ccont;
 
     void Start()
     {
         gstate = Object.FindObjectOfType<GameState>().GetComponent<GameState>();
+        ccont = Object.FindObjectOfType<CameraController>();
     }
 
 
@@ -18,6 +20,8 @@ public class Goal : MonoBehaviour {
         {
             gstate.increaseScore(assignedPlayer);
             //ThrowFlashyEffects
+            ccont.addScreenShake(10);
+            //explode the ball
             gstate.removeBall(other);
         }
     }
