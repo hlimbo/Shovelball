@@ -11,6 +11,7 @@ public class Ball : MonoBehaviour {
     public float flyingThreshold;
     //public float moveAcceleration;
     public float bounciness;
+    public float momentumTransferRatio;
     public float wallHitDecay;
     public float airFriction;
 
@@ -105,19 +106,19 @@ public class Ball : MonoBehaviour {
                 if (otherBall.isFlying)
                 {
                     other.rigidbody.velocity = ballBody.velocity;
-                    ballBody.velocity = ballBody.velocity.normalized * ballBody.velocity.magnitude * -1f;
+                    ballBody.velocity = ballBody.velocity.normalized * ballBody.velocity.magnitude * -1f * momentumTransferRatio;
                 }
                 else
                 {
                     isFlying = false;
-                    otherBall.SendFlying(ballBody.velocity);
+                    otherBall.SendFlying(ballBody.velocity.normalized * ballBody.velocity.magnitude * momentumTransferRatio);
                     ballBody.velocity = new Vector2(0f, 0f);
                 }
             }
             // otherwise do normal bounce
             else if (!otherBall.isFlying)
             {
-                ballBody.velocity = Vector2.Reflect(ballBody.velocity.normalized * ballBody.velocity.magnitude * bounciness, other.contacts[0].normal);
+                ballBody.velocity = Vector2.Reflect(ballBody.velocity.normalized * ballBody.velocity.magnitude * momentumTransferRatio, other.contacts[0].normal);
             }
         }
         
