@@ -12,6 +12,7 @@ public class CreateForce : MonoBehaviour
     {
         if (other.tag == TagManager.ball)
         {
+            Ball ball = other.GetComponent<Ball>();
             Vector2 forceVector = direction * power;
             float whichDirection = -1f;
 
@@ -20,7 +21,8 @@ public class CreateForce : MonoBehaviour
 
             if (movement != null && movement.facingRight)
                 whichDirection = 1f;
-            other.GetComponent<Rigidbody2D>().velocity = PhysicsUtility.SetVelocity(other.GetComponent<Rigidbody2D>().velocity, forceVector.x * whichDirection, forceVector.y);
+
+            ball.SendFlying(new Vector2(forceVector.x * whichDirection, forceVector.y));
         }
     }
 }
