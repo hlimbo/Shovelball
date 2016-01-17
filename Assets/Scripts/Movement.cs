@@ -107,6 +107,7 @@ public class Movement : MonoBehaviour
 
             // flip character
             Flip();
+            previousDirection = -previousDirection;
         }
 
         // Apply jump.
@@ -126,7 +127,7 @@ public class Movement : MonoBehaviour
     private void DoMove()
     {
         // Can't move while wall-hugging
-        if (!anim.GetBool(TagManager.isOnWall) || (anim.GetBool(TagManager.isOnWall) && anim.GetBool(TagManager.isOnGround)))
+        if (!anim.GetBool(TagManager.isOnWall) || anim.GetBool(TagManager.isOnBall) || (anim.GetBool(TagManager.isOnWall) && anim.GetBool(TagManager.isOnGround)))
         {
             // Get the scaled movement direction depending on if grounded or in air.
             float direction = input.joyStickX;
@@ -158,8 +159,6 @@ public class Movement : MonoBehaviour
             // Also, need to keep track of flipping
             else
             {
-                if (rbody.velocity.x != 0)
-                    previousDirection = rbody.velocity.x;
                 accelerations["Friction"].maxVelX = 0.0f;
                 accelerations["Friction"].magnitude = currFriction;
                 accelerations["Movement"].maxVelX = null;

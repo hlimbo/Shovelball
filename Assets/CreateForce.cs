@@ -5,7 +5,7 @@ public class CreateForce : MonoBehaviour
 {
     public float power;
     public Vector2 direction;
-    public Transform hitSource;
+    public Collider2D hitSource;
     public Movement movement;
     public bool useCollisionAngle;
     
@@ -15,17 +15,13 @@ public class CreateForce : MonoBehaviour
         {
             Ball ball = other.GetComponent<Ball>();
             Vector2 forceVector = direction * power;
-            float whichDirection = -1f;
 
             if (useCollisionAngle)
             {
-                forceVector = (other.transform.position - hitSource.position).normalized * power;
+                forceVector = (other.transform.position - hitSource.transform.position).normalized * power;
             }
 
-            if (movement != null && movement.facingRight)
-                whichDirection = 1f;
-
-            ball.SendFlying(new Vector2(forceVector.x * whichDirection, forceVector.y));
+            ball.SendFlying(new Vector2(forceVector.x, forceVector.y));
         }
     }
 }
