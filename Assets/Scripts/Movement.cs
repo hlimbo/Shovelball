@@ -22,9 +22,6 @@ public class Movement : MonoBehaviour
     public int MIN_JUMP_FRAMES;
     public int MID_JUMP_FRAMES;
     public int MAX_JUMP_FRAMES;
-    public string jumpButton;
-    public string horizontalAxis;
-    public string attackButton;
 
     public Transform leftGroundCheck;
     public Transform rightGroundCheck;

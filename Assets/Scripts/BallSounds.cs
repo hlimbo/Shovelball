@@ -17,7 +17,6 @@ public class BallSounds : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D other)
     {
-        Debug.Log("hello");
         source.PlayOneShot(hitSound, 25.0f);
 
     }
