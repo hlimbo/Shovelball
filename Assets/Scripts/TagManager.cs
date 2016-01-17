@@ -12,4 +12,5 @@
     public static string isAttacking = "isAttacking";
     public static string isOnGround = "isOnGround";
     public static string isOnWall = "isOnWall";
+    public static string isOnBall = "isOnBall";
 }

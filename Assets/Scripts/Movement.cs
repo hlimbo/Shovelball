@@ -32,6 +32,7 @@ public class Movement : MonoBehaviour
     public float checkRadius;
     public LayerMask floorLayerMask;
     public LayerMask wallLayerMask;
+    public LayerMask ballLayerMask;
 
     public bool facingRight = true;
 
@@ -67,22 +68,19 @@ public class Movement : MonoBehaviour
         bool wasGrounded = anim.GetBool(TagManager.isOnGround);
         bool wasOnWall = anim.GetBool(TagManager.isOnWall);
 
-        // Combine platform and floor masks for grounded mask
-        bool isGrounded = Physics2D.OverlapCircle(leftGroundCheck.position, checkRadius, floorLayerMask) || Physics2D.OverlapCircle(rightGroundCheck.position, checkRadius, floorLayerMask);
-        bool isOnWall = Physics2D.OverlapCircle(leftWallCheck.position, checkRadius, wallLayerMask) || Physics2D.OverlapCircle(rightWallCheck.position, checkRadius, wallLayerMask);
-
         // Set the animator's state values
-        anim.SetBool(TagManager.isOnGround, isGrounded);
-        anim.SetBool(TagManager.isOnWall, isOnWall);
+        anim.SetBool(TagManager.isOnGround, Physics2D.OverlapCircle(leftGroundCheck.position, checkRadius, floorLayerMask) || Physics2D.OverlapCircle(rightGroundCheck.position, checkRadius, floorLayerMask));
+        anim.SetBool(TagManager.isOnWall, Physics2D.OverlapCircle(leftWallCheck.position, checkRadius, wallLayerMask) || Physics2D.OverlapCircle(rightWallCheck.position, checkRadius, wallLayerMask));
+        anim.SetBool(TagManager.isOnBall, Physics2D.OverlapCircle(leftGroundCheck.position, checkRadius, ballLayerMask) || Physics2D.OverlapCircle(rightGroundCheck.position, checkRadius, ballLayerMask));
 
         // On landing, apply horizontal boost for responsive controls. Also tell animation controller we hit the ground.
-        if (isGrounded && (wasGrounded != isGrounded))
+        if (anim.GetBool(TagManager.isOnGround) && (wasGrounded != anim.GetBool(TagManager.isOnGround)))
         {
             rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, rbody.velocity.x * momentumScale, null);
         }
         
         // On hitting a wall, apply horizontal momentum to vertical momentum
-        if (isOnWall && (wasOnWall != isOnWall))
+        if (anim.GetBool(TagManager.isOnWall) && (wasOnWall != anim.GetBool(TagManager.isOnWall)))
         {
             float ysign = Mathf.Sign(rbody.velocity.y);
             if (ysign > 0.0f)
@@ -95,9 +93,9 @@ public class Movement : MonoBehaviour
         }
 
         // Disable gravity if needed
-        if (isGrounded)
+        if (anim.GetBool(TagManager.isOnGround))
             accelerations["Gravity"].maxVelY = null;
-        else if (isOnWall)
+        else if (anim.GetBool(TagManager.isOnWall))
             accelerations["Gravity"].maxVelY = wallSlideSpeed;
         else
             accelerations["Gravity"].maxVelY = maxFallSpeed;
@@ -160,7 +158,9 @@ public class Movement : MonoBehaviour
     void DoJump()
     {
         // Player has jumped?
-        if (Input.GetButtonDown(jumpButton) && (anim.GetBool(TagManager.isOnGround) || anim.GetBool(TagManager.isOnWall)) && jumpTimer == jumpMaxTimer)
+        if (Input.GetButtonDown(jumpButton)
+            && (anim.GetBool(TagManager.isOnGround) || anim.GetBool(TagManager.isOnWall) || anim.GetBool(TagManager.isOnBall))
+            && jumpTimer == jumpMaxTimer)
         {
             // Reset jump timer and max frames of jumping
             jumpTimer = 0;
@@ -169,7 +169,8 @@ public class Movement : MonoBehaviour
             // If jumping from wall, apply horizontal acceleration
             if (anim.GetBool(TagManager.isOnWall) && !anim.GetBool(TagManager.isOnGround))
             {
-                rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, trans.localScale.x * maxMoveSpeed, null);
+                float facing = (facingRight) ? 1 : -1;
+                rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, facing * maxMoveSpeed, null);
                 anim.SetBool(TagManager.isOnWall, false);
             }
         }
