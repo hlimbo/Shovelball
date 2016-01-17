@@ -4,6 +4,8 @@ using System.Collections.Generic;
 public class Ball : MonoBehaviour {
 
 
+    public static int INACTIVE = -1;
+
     public float maxFallSpeed;
     public float fallAcceleration;
     public float flyingThreshold;
@@ -21,6 +23,9 @@ public class Ball : MonoBehaviour {
     private Rigidbody2D ballBody;
     private CircleCollider2D collider;
 
+    //useful for ball Pooling
+    public int TagNumber { get; set; }
+
     // Use this for initialization
     void Start ()
     {
@@ -30,6 +35,8 @@ public class Ball : MonoBehaviour {
 
         ballBody = GetComponent<Rigidbody2D>();
         collider = GetComponent<CircleCollider2D>();
+
+        TagNumber = INACTIVE;
     }
 
 	// Update is called once per frame
@@ -125,4 +132,6 @@ public class Ball : MonoBehaviour {
         isFlying = true;
         ballBody.velocity = velocity;
     }
+
+
 }

@@ -37,7 +37,7 @@ public class Movement : MonoBehaviour
     public bool canAttack = true;
 
     private Dictionary<string, Acceleration> accelerations;
-    private float previousDirection;
+    private float previousDirection = -1;
     private int jumpTimer;
     private int jumpMaxTimer;
 
@@ -83,7 +83,19 @@ public class Movement : MonoBehaviour
             rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, rbody.velocity.x * momentumScale, null);
         }
 
+        // Disable gravity if needed
+        if (anim.GetBool(TagManager.isOnGround))
+            accelerations["Gravity"].maxVelY = null;
+        else if (anim.GetBool(TagManager.isOnWall))
+            accelerations["Gravity"].maxVelY = wallSlideSpeed;
+        else
+            accelerations["Gravity"].maxVelY = maxFallSpeed;
+
+        // Apply movement.
+        DoMove();
+
         // On hitting a wall, apply horizontal momentum to vertical momentum
+        // Need to do it here in case the player flipped in DoMove()
         if (anim.GetBool(TagManager.isOnWall) && (wasOnWall != anim.GetBool(TagManager.isOnWall)))
         {
             float ysign = Mathf.Sign(rbody.velocity.y);
@@ -95,18 +107,8 @@ public class Movement : MonoBehaviour
 
             // flip character
             Flip();
+            previousDirection = -previousDirection;
         }
-
-        // Disable gravity if needed
-        if (anim.GetBool(TagManager.isOnGround))
-            accelerations["Gravity"].maxVelY = null;
-        else if (anim.GetBool(TagManager.isOnWall))
-            accelerations["Gravity"].maxVelY = wallSlideSpeed;
-        else
-            accelerations["Gravity"].maxVelY = maxFallSpeed;
-
-        // Apply movement.
-        DoMove();
 
         // Apply jump.
         DoJump();
@@ -125,7 +127,7 @@ public class Movement : MonoBehaviour
     private void DoMove()
     {
         // Can't move while wall-hugging
-        if (!anim.GetBool(TagManager.isOnWall) || (anim.GetBool(TagManager.isOnWall) && anim.GetBool(TagManager.isOnGround)))
+        if (!anim.GetBool(TagManager.isOnWall) || anim.GetBool(TagManager.isOnBall) || (anim.GetBool(TagManager.isOnWall) && anim.GetBool(TagManager.isOnGround)))
         {
             // Get the scaled movement direction depending on if grounded or in air.
             float direction = input.joyStickX;
@@ -154,6 +156,7 @@ public class Movement : MonoBehaviour
                 anim.SetBool(TagManager.isWalking, true);
             }
             // Player not moving ... apply friction and remove movement influence
+            // Also, need to keep track of flipping
             else
             {
                 accelerations["Friction"].maxVelX = 0.0f;
