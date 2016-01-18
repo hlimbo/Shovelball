@@ -16,14 +16,13 @@ public class Ball : MonoBehaviour {
     public float airFriction;
     public float playerMomentumTransferRatio;
 
-    public LayerMask floorLayerMask;
-
     public bool isGrounded;
     public bool isFlying;
 
     private Dictionary<string, Acceleration> accelerations;
     private Rigidbody2D ballBody;
-    private CircleCollider2D collider;
+    private CircleCollider2D circleCollider;
+    private Transform ballTransform;
 
     private int maxDelayFrames;
     private int delayFrames;
@@ -41,7 +40,8 @@ public class Ball : MonoBehaviour {
         accelerations.Add("Friction", new Acceleration(null,null, airFriction));
 
         ballBody = GetComponent<Rigidbody2D>();
-        collider = GetComponent<CircleCollider2D>();
+        circleCollider = GetComponent<CircleCollider2D>();
+        ballTransform = GetComponent<Transform>();
 
         maxDelayFrames = 0;
         delayFrames = maxDelayFrames;
@@ -56,7 +56,8 @@ public class Ball : MonoBehaviour {
         {
             
             //detect what the ball hits using physics engine.
-            isGrounded = Physics2D.OverlapCircle(ballBody.position, collider.radius, floorLayerMask);
+            LayerMask floorLayerMask = LayerMask.GetMask(TagManager.floor, TagManager.platform);
+            isGrounded = Physics2D.OverlapCircle(ballBody.position, (circleCollider.radius + 0.1f) * ballTransform.localScale.y, floorLayerMask);
 
             if (ballBody.velocity.magnitude < flyingThreshold)
             {
