@@ -108,9 +108,9 @@ public class Movement : MonoBehaviour
             bool isOnPlatform = Physics2D.OverlapCircle(leftGroundCheck.position, checkRadius, platformLayerMask) || Physics2D.OverlapCircle(rightGroundCheck.position, checkRadius, platformLayerMask);
             if (input.joyStickY < -0.9f && isOnPlatform)
             {
-                maxDropFrames = 15 - (((int) Mathf.Abs(rbody.velocity.y)) % 10);
+                maxDropFrames = 10 - (int) (Mathf.Abs(rbody.velocity.y) / 10f);
                 if (maxDropFrames < 0)
-                    maxDropFrames = 5;
+                    maxDropFrames = 3;
                 dropFrames = 0;
                 anim.SetBool(TagManager.isOnGround, false);
             }

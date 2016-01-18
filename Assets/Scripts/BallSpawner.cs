@@ -106,7 +106,7 @@ public class BallSpawner : MonoBehaviour {
         foreach(Ball b in ballList)
         {
             Vector2 randomVel = SetRandomVelocity();
-            Debug.Log(randomVel.ToString());
+            //Debug.Log(randomVel.ToString());
             SetBallVelocity(b, randomVel.x, randomVel.y);
             yield return new WaitForSeconds(waitTime);
         }

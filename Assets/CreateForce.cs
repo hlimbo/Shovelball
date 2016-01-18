@@ -16,48 +16,67 @@ public class CreateForce : MonoBehaviour
         {
             Ball ball = other.GetComponent<Ball>();
 
-            if (!ball.isFlying)
-            {
             Vector2 forceVector = direction * power;
 
-                // Make the hits more predictable to 8 angles
-                if (useCollisionAngle)
-                {
-                    forceVector = other.transform.position - hitSource.position;
-                    float angleUp = Vector2.Angle(forceVector, Vector2.up);
-                    float angleRight = Vector2.Angle(forceVector, Vector2.right);
+            // Make the hits more predictable to 8 angles
+            if (useCollisionAngle)
+            {
+                forceVector = other.transform.position - hitSource.position;
+                float angleUp = Vector2.Angle(forceVector, Vector2.up);
+                float angleRight = Vector2.Angle(forceVector, Vector2.right);
 
-                    // Snap the force vector to 8 angles around the unit circle
-                    if (angleUp < 45 && angleRight < 90)
-                        forceVector = Vector2.up;
-                    else if (angleUp < 90 && angleRight < 45)
+                // Snap the force vector to 8 angles around the unit circle
+                /* 
+                    * U  -> up < 30, right < 120
+                    * UR -> up < 60, right < 60
+                    * R  -> up < 120, right < 30
+                    * DR -> up < 150, right < 60
+                    * D  -> up < 180, right < 120
+                    * DL -> up < 150, right < 150
+                    * L  -> up < 120, right < 180
+                    * UL -> up < 60, right < 150
+                    */
+                if (angleUp < 30 && angleRight < 120)
+                {
+                    forceVector = Vector2.up;
+                }
+                else if (angleUp < 60)
+                {
+                    if (angleRight < 60)
                         forceVector = (Vector2.up + Vector2.right).normalized;
-                    else if (angleUp < 135 && angleRight < 45)
-                        forceVector = Vector2.right;
-                    else if (angleUp < 180 && angleRight < 90)
-                        forceVector = (Vector2.down + Vector2.right).normalized;
-                    else if (angleUp < 180 && angleRight < 135)
-                        forceVector = Vector2.down;
-                    else if (angleUp < 135 && angleRight < 180)
-                        forceVector = (Vector2.down + Vector2.left).normalized;
-                    else if (angleUp < 90 && angleRight < 180)
-                        forceVector = Vector2.left;
                     else
                         forceVector = (Vector2.up + Vector2.left).normalized;
-
-                    // Apply the force
-                    if (ball.isGrounded && Vector2.Angle(forceVector, ball.SurfaceNormal()) > 90)
-                    {
-                        forceVector = Vector2.Reflect(forceVector, ball.SurfaceNormal());
-
-                    }
-                    forceVector = forceVector * power;
                 }
-                ball.SendFlying(new Vector2(forceVector.x, forceVector.y));
-                movement.Lag((int)(forceVector.magnitude / 5f));
-            }
+                else if (angleUp < 120)
+                {
+                    if (angleRight < 30)
+                        forceVector = Vector2.right;
+                    else
+                        forceVector = Vector2.left;
+                }
+                else if (angleUp < 150)
+                {
+                    if (angleRight < 60)
+                        forceVector = (Vector2.down + Vector2.right).normalized;
+                    else
+                        forceVector = (Vector2.down + Vector2.left).normalized;
+                }
+                else
+                {
+                    forceVector = Vector2.down;
+                }
 
-            
+                //Debug.Log(angleUp.ToString() + ", " + angleRight.ToString() + ": " + forceVector.ToString());
+
+                // Apply the force
+                if (ball.isGrounded && Vector2.Angle(forceVector, ball.SurfaceNormal()) > 90)
+                {
+                    forceVector = Vector2.Reflect(forceVector, ball.SurfaceNormal());
+                }
+                forceVector = forceVector * power;
+            }
+            ball.SendFlying(new Vector2(forceVector.x, forceVector.y));
+            movement.Lag((int)(forceVector.magnitude / 5f));
         }
         else if (other.tag == TagManager.player)
         {
