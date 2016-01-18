@@ -63,6 +63,7 @@ public class GameState : MonoBehaviour {
     {
         scores[player] += 1;
         //whatever flashy thing you want to add in a score
+        ccont.updateScore(player, scores[player]);
     }
 
     public void removeBall(Collider2D ball)
