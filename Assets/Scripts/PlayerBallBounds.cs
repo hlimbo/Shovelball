@@ -5,16 +5,16 @@ public class PlayerBallBounds : MonoBehaviour {
 
 
     public GameObject ballSpawner;
-    //old spawner
+    public GameObject spawnPoint;
+    public GameObject spawnPoint2;
     public GameObject[] players;
     private BallSpawner spawner;
-    
-    //new spawner with pooling.
-    public GameObject playerSpawner;
+
+    int randomSpawnPoint;
 
     void Start()
     {
-        spawner = ballSpawner.GetComponent<BallSpawner>();
+        spawner = ballSpawner.GetComponent<BallSpawner>();   
     }
 
 	void OnTriggerExit2D(Collider2D other)
@@ -30,8 +30,14 @@ public class PlayerBallBounds : MonoBehaviour {
         //disable player
         if(other.gameObject.tag == TagManager.player || other.gameObject.tag == TagManager.player + "(Clone)")
         {
-            playerSpawner.GetComponent<PlayerSpawner>().currentPlayerCount--;
-            playerSpawner.GetComponent<PlayerSpawner>().DisablePlayer(other.GetComponent<Movement>());           
+            randomSpawnPoint = Random.Range(1, 100);
+            Debug.Log(randomSpawnPoint);
+            if (randomSpawnPoint > 50)
+                other.transform.position = spawnPoint.transform.position;
+            else
+                other.transform.position = spawnPoint2.transform.position;
+            
+            //other.transform.position = spawnPoint.transform.position;
         }
     }
 
