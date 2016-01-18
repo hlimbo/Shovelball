@@ -132,11 +132,11 @@ public class BallSpawner : MonoBehaviour {
     }
 
     
-    void Start()
-    {
-        StartCoroutine(SpawnBalls(LaunchDelay));
-        StartCoroutine(ApplyVelocities(LaunchDelay, xLaunchVelocity, yLaunchVelocity));
-    }
+    //void Start()
+    //{
+    //    StartCoroutine(SpawnBalls(LaunchDelay));
+    //    StartCoroutine(ApplyVelocities(LaunchDelay, xLaunchVelocity, yLaunchVelocity));
+    //}
 
     void Update()
     {
