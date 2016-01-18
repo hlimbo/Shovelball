@@ -118,22 +118,23 @@ public class Ball : MonoBehaviour {
                 otherBall.gettingHit = true;
 
                 // Set up collision vectors
-                Vector2 myForceVector = other.contacts[0].normal * -ballBody.velocity.magnitude;
-                Vector2 otherForceVector = other.contacts[0].normal * otherBall.ballBody.velocity.magnitude;
+                Vector2 myForceVector = other.contacts[0].normal;
+                Vector2 otherForceVector = other.contacts[0].normal;
+
                 if (otherBall.isGrounded)
                     myForceVector = GetRicochet(myForceVector, otherBall.surfaceNormal);
                 if (isGrounded)
                     otherForceVector = GetRicochet(otherForceVector, surfaceNormal);
 
-                // Do collision
+                // More powerful collision
                 if (isFlying)
-                    otherBall.SendFlying(myForceVector * momentumTransferRatio);
+                    otherBall.SendFlying(myForceVector * -stashVelocity.magnitude * momentumTransferRatio);
                 else
-                    otherBall.ballBody.velocity = myForceVector * otherBall.bounciness;
+                    otherBall.ballBody.velocity = myForceVector * -ballBody.velocity.magnitude * otherBall.bounciness;
                 if (otherBall.isFlying)
-                    SendFlying(otherForceVector * otherBall.momentumTransferRatio);
+                    SendFlying(otherForceVector *= otherBall.stashVelocity.magnitude * otherBall.momentumTransferRatio);
                 else
-                    ballBody.velocity = otherForceVector * bounciness;
+                    ballBody.velocity = otherForceVector * otherBall.ballBody.velocity.magnitude * bounciness;
             }
             else
             {
@@ -156,10 +157,8 @@ public class Ball : MonoBehaviour {
             if (player.IsGrounded())
                 forceVector = GetRicochet(forceVector, player.SurfaceNormal());
 
-            // Need to set velocity before lagging so it stashes the right value
-            ballBody.velocity = other.contacts[0].normal * other.rigidbody.velocity.magnitude * momentumTransferRatio;
             player.Knockback(forceVector);
-            Lag(ballBody.velocity);
+            Lag(Vector2.Reflect(ballBody.velocity * bounciness, surfaceNormal));
         }
     }
 
@@ -173,14 +172,13 @@ public class Ball : MonoBehaviour {
     public void SendFlying(Vector2 velocity)
     {
         isFlying = true;
-        ballBody.velocity = velocity;
         Lag(velocity);
     }
 
     private void Lag(Vector2 velocity)
     {
         maxDelayFrames = (int)(velocity.magnitude / 5f);
-        stashVelocity = ballBody.velocity;
+        stashVelocity = velocity;
         stashAngularVelocity = ballBody.angularVelocity;
         ballBody.velocity = Vector2.zero;
         ballBody.angularVelocity = 0f;
