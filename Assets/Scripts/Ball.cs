@@ -14,6 +14,7 @@ public class Ball : MonoBehaviour {
     public float momentumTransferRatio;
     public float wallHitDecay;
     public float airFriction;
+    public float playerMomentumTransferRatio;
 
     public LayerMask floorLayerMask;
 
@@ -27,6 +28,7 @@ public class Ball : MonoBehaviour {
     private int maxDelayFrames;
     private int delayFrames;
     private Vector2 stashVelocity;
+    private Vector2 surfaceNormal;
 
     //useful for ball Pooling
     public int TagNumber { get; set; }
@@ -104,13 +106,13 @@ public class Ball : MonoBehaviour {
             || other.gameObject.tag == TagManager.platform
             || other.gameObject.tag == TagManager.floor) 
         {
-            Vector2 CollNorm = other.contacts[0].normal;
+            surfaceNormal = other.contacts[0].normal;
             float decay = bounciness;
             if (other.gameObject.tag == TagManager.wall)
                 decay = wallHitDecay;
             if (other.gameObject.tag != TagManager.platform || other.contacts[0].point.y < ballBody.position.y)
             {
-                ballBody.velocity = Vector2.Reflect(ballBody.velocity.normalized * ballBody.velocity.magnitude * decay, CollNorm);
+                ballBody.velocity = Vector2.Reflect(ballBody.velocity * decay, surfaceNormal);
             }
         }
 
@@ -122,13 +124,18 @@ public class Ball : MonoBehaviour {
             if (isFlying)
             {
                 isFlying = false;
-                otherBall.SendFlying(ballBody.velocity.normalized * ballBody.velocity.magnitude * momentumTransferRatio);
+                Vector2 forceVector = ballBody.velocity * momentumTransferRatio;
+                if (otherBall.isGrounded && Vector2.Angle(forceVector, otherBall.SurfaceNormal()) > 90)
+                {
+                    forceVector = Vector2.Reflect(forceVector, otherBall.SurfaceNormal());
+                }
+                otherBall.SendFlying(forceVector);
                 ballBody.velocity = Vector2.zero;
             }
             // otherwise do normal bounce
             else
             {
-                ballBody.velocity = Vector2.Reflect(ballBody.velocity.normalized * ballBody.velocity.magnitude * momentumTransferRatio, other.contacts[0].normal);
+                ballBody.velocity = Vector2.Reflect(ballBody.velocity * momentumTransferRatio, other.contacts[0].normal);
             }
         }
         
@@ -139,13 +146,19 @@ public class Ball : MonoBehaviour {
             if (isFlying)
             {
                 isFlying = false;
-                player.Knockback(ballBody.velocity.normalized * ballBody.velocity.magnitude * momentumTransferRatio);
+                Vector2 forceVector = ballBody.velocity * momentumTransferRatio;
+                if (player.IsGrounded() && Vector2.Angle(forceVector, player.SurfaceNormal()) > 90)
+                {
+                    forceVector = Vector2.Reflect(forceVector, player.SurfaceNormal());
+                }
+                player.Knockback(forceVector);
                 ballBody.velocity = Vector2.zero;
             }
             // otherwise do normal bounce
             else
             {
-                ballBody.velocity = Vector2.Reflect(ballBody.velocity.normalized * ballBody.velocity.magnitude * momentumTransferRatio, other.contacts[0].normal);
+                player.Knockback(ballBody.velocity * playerMomentumTransferRatio);
+                ballBody.velocity = Vector2.Reflect(ballBody.velocity * momentumTransferRatio, other.contacts[0].normal);
             }
         }
     }
@@ -157,5 +170,10 @@ public class Ball : MonoBehaviour {
         stashVelocity = velocity;
         ballBody.velocity = Vector2.zero;
         delayFrames = 0;
+    }
+
+    public Vector2 SurfaceNormal()
+    {
+        return surfaceNormal;
     }
 }

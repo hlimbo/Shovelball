@@ -55,7 +55,7 @@ public class BallSpawner : MonoBehaviour {
         Rigidbody2D rb = ball.gameObject.GetComponent<Rigidbody2D>();
         rb.velocity = Vector2.zero;
 
-        Debug.Log(activeBallCount);
+        //Debug.Log(activeBallCount);
 
 
     }

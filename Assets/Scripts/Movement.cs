@@ -42,6 +42,7 @@ public class Movement : MonoBehaviour
     private int jumpTimer;
     private int jumpMaxTimer;
 
+    private Vector2 surfaceNormal;
 
     private int maxDelayFrames;
     private int delayFrames;
@@ -199,6 +200,10 @@ public class Movement : MonoBehaviour
         {
             this.Knockback((rbody.position - other.rigidbody.position).normalized * bounceSpeed, false);
         }
+        else if (other.gameObject.tag == TagManager.floor || other.gameObject.tag == TagManager.platform)
+        {
+            surfaceNormal = other.contacts[0].normal;
+        }
     }
 
     void DoJump()
@@ -281,5 +286,15 @@ public class Movement : MonoBehaviour
         stashVelocity = rbody.velocity;
         rbody.velocity = Vector2.zero;
         delayFrames = 0;
+    }
+
+    public bool IsGrounded()
+    {
+        return anim.GetBool(TagManager.isOnGround);
+    }
+
+    public Vector2 SurfaceNormal()
+    {
+        return surfaceNormal;
     }
 }

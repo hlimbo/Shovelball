@@ -21,10 +21,10 @@ public class PlayerBallBounds : MonoBehaviour {
     {
         if(other.gameObject.tag == TagManager.ball || other.gameObject.tag == TagManager.ball + "(Clone)")
         {
-            Debug.Log("sup");
+            //Debug.Log("sup");
             Ball ball = other.gameObject.GetComponent<Ball>();
             spawner.DisableBall(ball);
-            Debug.Log("Ontriggerexit : " + spawner.activeBallCount);
+            //Debug.Log("Ontriggerexit : " + spawner.activeBallCount);
         }
 
         //disable player
