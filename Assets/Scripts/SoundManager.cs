@@ -33,7 +33,13 @@ public class SoundManager : MonoBehaviour {
         efxSource.Play();
     }
 
-    //optional (maybe for bounces)
+    public void RandomizeSfx (params AudioClip[] clips)
+    {
+        int randomIndex = Random.Range(0, clips.Length);
+        float randomPitch = Random.Range(lowPitchRange, highPitchRange);
+
+        efxSource.pitch = randomPitch;
+    }
 
 	
 	
