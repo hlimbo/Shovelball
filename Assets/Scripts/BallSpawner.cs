@@ -159,12 +159,15 @@ public class BallSpawner : MonoBehaviour {
 
     void Update()
     {
-            //spawn balls in a cluster.
-            //Invoke("LaunchBall",1.0f);
 
-            //spawn one at a time.
-            StartCoroutine(SpawnBalls(LaunchDelay));
-            StartCoroutine(ApplyVelocities(LaunchDelay));
+        //if (activeBallCount >= maxBallCount)
+        //    this.enabled = false;
+        //spawn balls in a cluster.
+        //Invoke("LaunchBall",1.0f);
+
+        //spawn one at a time.
+        StartCoroutine(SpawnBalls(LaunchDelay));
+        StartCoroutine(ApplyVelocities(LaunchDelay));
 
 
     }

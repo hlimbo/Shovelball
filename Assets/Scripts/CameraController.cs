@@ -24,7 +24,7 @@ public class CameraController : MonoBehaviour {
             float shakeY = (2 * Mathf.PerlinNoise(0.0f, Time.time * randomIntensity) - 1) * shakeLeft * shakeScale;
             shakeLeft -= decrementFactor;
 
-            transform.position = new Vector3(originPosition.x + shakeX, originPosition.y = shakeY, originPosition.z);
+            transform.position = new Vector3(originPosition.x + shakeX, originPosition.y + shakeY, originPosition.z);
 
             if (shakeLeft <= 0.0f)
             {

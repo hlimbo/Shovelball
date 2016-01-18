@@ -5,17 +5,10 @@ using System.Linq;
 
 public class CanvasController : MonoBehaviour {
 
-    private Text timerText;
-    private Text playerOneScore;
-    private Text playerTwoScore;
+    public Text timerText;
+    public Text playerOneScore;
+    public Text playerTwoScore;
 
-    void Start()
-    {
-        Text[] textPals = GetComponentsInChildren<Text>();
-        timerText = textPals.Where(c => c.name == "TimerText").First();
-        playerOneScore = textPals.Where(c => c.name == "ScorePlyrOne").First();
-        playerTwoScore = textPals.Where(c => c.name == "ScorePlyrTwo").First();
-    }
     public void updateTimer(float timeLeft)
     {
         int minutes = Mathf.FloorToInt(timeLeft/60);
