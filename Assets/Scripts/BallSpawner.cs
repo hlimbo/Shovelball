@@ -49,11 +49,14 @@ public class BallSpawner : MonoBehaviour {
         ball.gameObject.SetActive(false);
         ball.gameObject.transform.position = Vector2.zero;
         ball.TagNumber = Ball.INACTIVE;
-        activeBallCount--;
+      
 
         //zero out velocity.
         Rigidbody2D rb = ball.gameObject.GetComponent<Rigidbody2D>();
         rb.velocity = Vector2.zero;
+
+        Debug.Log(activeBallCount);
+
 
     }
 
@@ -91,6 +94,19 @@ public class BallSpawner : MonoBehaviour {
         }
     }
 // ===================================================================  //
+    
+    public bool AllBallsInactive()
+    {
+        int count = 0;
+
+        foreach(Ball b in ballList)
+        {
+            if (IsBallDisabled(b))
+                ++count;
+        }
+
+        return count >= minBallCount;
+    }
 
    //use when you want balls spawning in clusters.
     private void LaunchBall()
@@ -115,24 +131,25 @@ public class BallSpawner : MonoBehaviour {
         activeBallCount = 0;
     }
 
-    // Use this for initialization
+    
     void Start()
     {
-        //StartCoroutine(SpawnBalls(LaunchDelay));
-  
-
+        StartCoroutine(SpawnBalls(LaunchDelay));
+        StartCoroutine(ApplyVelocities(LaunchDelay, xLaunchVelocity, yLaunchVelocity));
     }
 
     void Update()
     {
-        Debug.Log("Active ball count: " + activeBallCount);
-        InvokeRepeating("LaunchBall", 0.1f,LaunchDelay);
+  
+        if(AllBallsInactive())
+        {
+            //spawn balls in a cluster.
+            //Invoke("LaunchBall",1.0f);
 
-        //if(activeBallCount <= 0)
-        //{
-        //    StartCoroutine(SpawnBalls(LaunchDelay));
-        //    StartCoroutine(ApplyVelocities(LaunchDelay, xLaunchVelocity, yLaunchVelocity));
-        //}
+            //spawn one at a time.
+            StartCoroutine(SpawnBalls(LaunchDelay));
+            StartCoroutine(ApplyVelocities(LaunchDelay, xLaunchVelocity, yLaunchVelocity));
+        }
 
     }
 

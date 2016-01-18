@@ -5,8 +5,12 @@ public class PlayerBallBounds : MonoBehaviour {
 
 
     public GameObject ballSpawner;
+    //old spawner
     public GameObject[] players;
     private BallSpawner spawner;
+    
+    //new spawner with pooling.
+    public GameObject playerSpawner;
 
     void Start()
     {
@@ -15,17 +19,19 @@ public class PlayerBallBounds : MonoBehaviour {
 
 	void OnTriggerExit2D(Collider2D other)
     {
-        if(other.gameObject.tag == TagManager.ball)
+        if(other.gameObject.tag == TagManager.ball || other.gameObject.tag == TagManager.ball + "(Clone)")
         {
+            Debug.Log("sup");
             Ball ball = other.gameObject.GetComponent<Ball>();
-            spawner.DisableBall(ball);      
+            spawner.DisableBall(ball);
+            Debug.Log("Ontriggerexit : " + spawner.activeBallCount);
         }
 
         //disable player
-        if(other.gameObject.tag == TagManager.player)
+        if(other.gameObject.tag == TagManager.player || other.gameObject.tag == TagManager.player + "(Clone)")
         {
-            other.GetComponent<Movement>().enabled = false;
-            other.gameObject.SetActive(false);            
+            playerSpawner.GetComponent<PlayerSpawner>().currentPlayerCount--;
+            playerSpawner.GetComponent<PlayerSpawner>().DisablePlayer(other.GetComponent<Movement>());           
         }
     }
 
