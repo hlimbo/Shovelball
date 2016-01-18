@@ -12,6 +12,7 @@ public class GameState : MonoBehaviour {
     private int[] scores;
 
     private BallSpawner bspawner;
+    private CanvasController ccont;
 
 	// Use this for initialization
 	void Start () {
@@ -19,8 +20,16 @@ public class GameState : MonoBehaviour {
         timeLeft = gameTime;
         gameOver = false;
 
+        bspawner = Object.FindObjectOfType<BallSpawner>();
+        ccont = Object.FindObjectOfType<CanvasController>();
+
         startGame();
 	}
+
+    void Update()
+    {
+        ccont.updateTimer(timeLeft);
+    }
 
     // Update is called once per frame
     void FixedUpdate()
