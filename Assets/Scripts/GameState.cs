@@ -23,6 +23,8 @@ public class GameState : MonoBehaviour {
         bspawner = Object.FindObjectOfType<BallSpawner>();
         ccont = Object.FindObjectOfType<CanvasController>();
 
+        //REMOVE KEBAB FROM SCORE
+        ccont.updateScore(0, 0); ccont.updateScore(1, 0);
         startGame();
 	}
 
@@ -68,6 +70,7 @@ public class GameState : MonoBehaviour {
 
     public void removeBall(Collider2D ball)
     {
+        //Get direction to face
         bspawner.DisableBall(ball.GetComponent<Ball>());
         bspawner.activeBallCount--;
     }

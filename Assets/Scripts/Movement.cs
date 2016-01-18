@@ -29,7 +29,6 @@ public class Movement : MonoBehaviour
     public Transform leftWallCheck;
     public Transform rightWallCheck;
     public float checkRadius;
-    public LayerMask floorLayerMask;
     public LayerMask wallLayerMask;
     public LayerMask ballLayerMask;
 
@@ -46,6 +45,8 @@ public class Movement : MonoBehaviour
 
     private int maxDelayFrames;
     private int delayFrames;
+    private int dropFrames;
+    private int maxDropFrames = 0;
 
     private Vector2 stashVelocity;
 
@@ -72,11 +73,20 @@ public class Movement : MonoBehaviour
 
         maxDelayFrames = 0;
         delayFrames = maxDelayFrames;
+        dropFrames = maxDropFrames;
     }
 
     // FixedUpdate is called once per physics step
     void FixedUpdate()
     {
+        if (dropFrames != maxDropFrames)
+        {
+            GetComponent<BoxCollider2D>().enabled = false;
+        }
+        else
+        {
+            GetComponent<BoxCollider2D>().enabled = true;
+        }
         if (delayFrames == maxDelayFrames)
         {
             input = LazyInputManager.GetInput(playerIndex);
@@ -86,9 +96,26 @@ public class Movement : MonoBehaviour
             bool wasOnWall = anim.GetBool(TagManager.isOnWall);
 
             // Set the animator's state values
+            LayerMask floorLayerMask = LayerMask.GetMask(TagManager.floor, TagManager.platform);
+            LayerMask platformLayerMask = LayerMask.GetMask(TagManager.platform);
             anim.SetBool(TagManager.isOnGround, Physics2D.OverlapCircle(leftGroundCheck.position, checkRadius, floorLayerMask) || Physics2D.OverlapCircle(rightGroundCheck.position, checkRadius, floorLayerMask));
             anim.SetBool(TagManager.isOnWall, Physics2D.OverlapCircle(leftWallCheck.position, checkRadius, wallLayerMask) || Physics2D.OverlapCircle(rightWallCheck.position, checkRadius, wallLayerMask));
             anim.SetBool(TagManager.isOnBall, Physics2D.OverlapCircle(leftGroundCheck.position, checkRadius, ballLayerMask) || Physics2D.OverlapCircle(rightGroundCheck.position, checkRadius, ballLayerMask));
+
+            // Platform dropping
+            bool isOnPlatform = Physics2D.OverlapCircle(leftGroundCheck.position, checkRadius, platformLayerMask) || Physics2D.OverlapCircle(rightGroundCheck.position, checkRadius, platformLayerMask);
+            if (input.joyStickY < -0.9f && isOnPlatform)
+            {
+                maxDropFrames = 15 - (((int) Mathf.Abs(rbody.velocity.y)) % 10);
+                if (maxDropFrames < 0)
+                    maxDropFrames = 5;
+                dropFrames = 0;
+                anim.SetBool(TagManager.isOnGround, false);
+            }
+            if (dropFrames < maxDropFrames)
+            {
+                dropFrames++;
+            }
 
             // On landing, apply horizontal boost for responsive controls. Also tell animation controller we hit the ground.
             if (anim.GetBool(TagManager.isOnGround) && (wasGrounded != anim.GetBool(TagManager.isOnGround)))

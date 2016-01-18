@@ -43,6 +43,11 @@ public class CreateForce : MonoBehaviour
                     forceVector = (Vector2.up + Vector2.left).normalized;
                 
                 // Apply the force
+                if (ball.isGrounded && Vector2.Angle(forceVector, ball.SurfaceNormal()) > 90)
+                {
+                    forceVector = Vector2.Reflect(forceVector, ball.SurfaceNormal());
+                    
+                }
                 forceVector = forceVector * power;
             }
 
