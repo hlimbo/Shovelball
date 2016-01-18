@@ -56,6 +56,8 @@ public class Movement : MonoBehaviour
 
     private PlayerInput input;
 
+    private bool flippedFromMove = false;
+
     // Use this for initialization
     void Start()
     {
@@ -132,6 +134,7 @@ public class Movement : MonoBehaviour
                 accelerations["Gravity"].maxVelY = maxFallSpeed;
 
             // Apply movement.
+            flippedFromMove = false;
             DoMove();
 
             // On hitting a wall, apply horizontal momentum to vertical momentum
@@ -146,8 +149,11 @@ public class Movement : MonoBehaviour
                     rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, xsign * 5.0f, 0.0f);
 
                 // flip character
-                Flip();
-                previousDirection = -previousDirection;
+                if (!flippedFromMove)
+                {
+                    Flip();
+                    previousDirection = -previousDirection;
+                }
             }
 
             // Apply jump.
@@ -195,6 +201,7 @@ public class Movement : MonoBehaviour
                 {
                     rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, rbody.velocity.x * currPivotSpeedRetention, null);
                     Flip();
+                    flippedFromMove = true;
                 }
 
                 // Disable friction and apply movement

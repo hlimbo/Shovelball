@@ -65,7 +65,7 @@ public class Ball : MonoBehaviour {
             }
 
             // gravity
-            if (isGrounded || isFlying)
+            if (isFlying)
             {
                 accelerations["Gravity"].maxVelY = null;
             }
