@@ -3,6 +3,7 @@ using System.Collections;
 
 public class Goal : MonoBehaviour {
     public int assignedPlayer;
+    public ParticleSystem scoreExplosion;
 
     private GameState gstate;
     private CameraController ccont;
@@ -20,6 +21,13 @@ public class Goal : MonoBehaviour {
         {
             gstate.increaseScore(assignedPlayer);
             //ThrowFlashyEffects
+            Vector2 ballv = other.GetComponent<Rigidbody2D>().velocity;
+
+            Vector3 scoreLocation = other.transform.position;
+            ParticleSystem boom = Instantiate(scoreExplosion, scoreLocation, scoreExplosion.transform.rotation) as ParticleSystem;
+            float angle = (Mathf.Atan2(ballv.y, ballv.x) / (2 * Mathf.PI)) * 360;
+            boom.transform.rotation = Quaternion.AngleAxis(angle + 90, Vector3.forward);
+
             ccont.addScreenShake(10);
             //explode the ball
             gstate.removeBall(other);
