@@ -10,8 +10,10 @@ public class BallSpawner : MonoBehaviour {
     public int minBallCount;
 
     //controls
-    public float xLaunchVelocity;
-    public float yLaunchVelocity;
+    public float xMinLaunchVelocity;
+    public float yMinLaunchVelocity;
+    public float xMaxLaunchVelocity;
+    public float yMaxLaunchVelocity;
     public float LaunchDelay;
 
     public int activeBallCount;
@@ -45,6 +47,7 @@ public class BallSpawner : MonoBehaviour {
 
     public void DisableBall(Ball ball)
     {
+        activeBallCount--;
         ball.enabled = false;
         ball.gameObject.SetActive(false);
         ball.gameObject.transform.position = Vector2.zero;
@@ -64,6 +67,19 @@ public class BallSpawner : MonoBehaviour {
     {
         return  ball.gameObject.activeInHierarchy == false;
     }
+
+    public Vector2 SetRandomVelocity()
+    {
+        int num = Random.Range(-50, 51);
+        if (num == 0)
+            num = 1;
+        int dir = num / Mathf.Abs(num);
+        float x = Random.Range(xMinLaunchVelocity,xMaxLaunchVelocity) * dir;
+        float y = Random.Range(yMinLaunchVelocity, yMaxLaunchVelocity);
+
+        return new Vector2(x, y);
+    }
+
 
     public void SetBallVelocity(Ball ball, float? x, float? y)
     {
@@ -85,11 +101,13 @@ public class BallSpawner : MonoBehaviour {
         }
     }
 
-    private IEnumerator ApplyVelocities(float waitTime,float? x,float? y)
+    private IEnumerator ApplyVelocities(float waitTime)
     {
         foreach(Ball b in ballList)
         {
-            SetBallVelocity(b, x, y);
+            Vector2 randomVel = SetRandomVelocity();
+            Debug.Log(randomVel.ToString());
+            SetBallVelocity(b, randomVel.x, randomVel.y);
             yield return new WaitForSeconds(waitTime);
         }
     }
@@ -97,15 +115,15 @@ public class BallSpawner : MonoBehaviour {
     
     public bool AllBallsInactive()
     {
-        int count = 0;
+       // int count = 0;
 
         foreach(Ball b in ballList)
         {
             if (IsBallDisabled(b))
-                ++count;
+                activeBallCount--;
         }
 
-        return count >= minBallCount;
+        return activeBallCount <= 0;
     }
 
    //use when you want balls spawning in clusters.
@@ -117,7 +135,8 @@ public class BallSpawner : MonoBehaviour {
             if (IsBallDisabled(b))
             {
                 ActivateBall(b);
-                SetBallVelocity(b, xLaunchVelocity, yLaunchVelocity);
+                Vector2 randomVel = SetRandomVelocity();
+                SetBallVelocity(b, randomVel.x, randomVel.y);
                 return;
             }
 
@@ -131,25 +150,22 @@ public class BallSpawner : MonoBehaviour {
         activeBallCount = 0;
     }
 
-    
-    //void Start()
-    //{
-    //    StartCoroutine(SpawnBalls(LaunchDelay));
-    //    StartCoroutine(ApplyVelocities(LaunchDelay, xLaunchVelocity, yLaunchVelocity));
-    //}
+
+    void Start()
+    {
+        //StartCoroutine(SpawnBalls(LaunchDelay));
+        //StartCoroutine(ApplyVelocities(LaunchDelay));
+    }
 
     void Update()
     {
-  
-        if(AllBallsInactive())
-        {
             //spawn balls in a cluster.
             //Invoke("LaunchBall",1.0f);
 
             //spawn one at a time.
             StartCoroutine(SpawnBalls(LaunchDelay));
-            StartCoroutine(ApplyVelocities(LaunchDelay, xLaunchVelocity, yLaunchVelocity));
-        }
+            StartCoroutine(ApplyVelocities(LaunchDelay));
+
 
     }
 
