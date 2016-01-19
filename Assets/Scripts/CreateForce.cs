@@ -27,22 +27,22 @@ public class CreateForce : MonoBehaviour
 
                 // Snap the force vector to 8 angles around the unit circle
                 /* 
-                    * U  -> up < 30, right < 120
-                    * UR -> up < 60, right < 60
+                    * U  -> up < 15, right < 105
+                    * UR -> up < 60, right < 75
                     * R  -> up < 120, right < 30
-                    * DR -> up < 150, right < 60
-                    * D  -> up < 180, right < 120
-                    * DL -> up < 150, right < 150
+                    * DR -> up < 165, right < 75
+                    * D  -> up < 180, right < 105
+                    * DL -> up < 165, right < 150
                     * L  -> up < 120, right < 180
                     * UL -> up < 60, right < 150
                     */
-                if (angleUp < 30 && angleRight < 120)
+                if (angleUp < 15 && angleRight < 105)
                 {
                     forceVector = Vector2.up;
                 }
                 else if (angleUp < 60)
                 {
-                    if (angleRight < 60)
+                    if (angleRight < 75)
                         forceVector = (Vector2.up + Vector2.right).normalized;
                     else
                         forceVector = (Vector2.up + Vector2.left).normalized;
@@ -54,9 +54,9 @@ public class CreateForce : MonoBehaviour
                     else
                         forceVector = Vector2.left;
                 }
-                else if (angleUp < 150)
+                else if (angleUp < 165)
                 {
-                    if (angleRight < 60)
+                    if (angleRight < 75)
                         forceVector = (Vector2.down + Vector2.right).normalized;
                     else
                         forceVector = (Vector2.down + Vector2.left).normalized;

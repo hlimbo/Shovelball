@@ -152,6 +152,7 @@ public class Movement : MonoBehaviour
                 if (!flippedFromMove)
                 {
                     Flip();
+                    if (!wasGrounded)
                     previousDirection = -previousDirection;
                 }
             }
