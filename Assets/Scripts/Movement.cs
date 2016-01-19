@@ -153,7 +153,7 @@ public class Movement : MonoBehaviour
                 {
                     Flip();
                     if (!wasGrounded)
-                    previousDirection = -previousDirection;
+                        previousDirection = -previousDirection;
                 }
             }
 
