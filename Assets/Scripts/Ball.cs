@@ -132,7 +132,7 @@ public class Ball : MonoBehaviour {
             // otherwise do normal bounce
             else
             {
-                ballBody.velocity = Vector2.Reflect(ballBody.velocity * bounciness, other.contacts[0].normal);
+                ballBody.velocity = Vector2.Reflect(other.relativeVelocity * bounciness, other.contacts[0].normal) * playerBounciness;
             }
         }
         else if (other.gameObject.tag == TagManager.player)

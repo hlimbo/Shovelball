@@ -56,8 +56,6 @@ public class Movement : MonoBehaviour
 
     private PlayerInput input;
 
-    private bool flippedFromMove = false;
-
     // Use this for initialization
     void Start()
     {
@@ -125,6 +123,17 @@ public class Movement : MonoBehaviour
                 rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, rbody.velocity.x * momentumScale, null);
             }
 
+            // On hitting a wall, apply horizontal momentum to vertical momentum
+            if (anim.GetBool(TagManager.isOnWall) && (wasOnWall != anim.GetBool(TagManager.isOnWall)))
+            {
+                float ysign = Mathf.Sign(rbody.velocity.y);
+                float xsign = Mathf.Sign(rbody.velocity.x);
+                if (ysign > 0.0f)
+                    rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, xsign * 5.0f, rbody.velocity.magnitude * ysign);
+                else
+                    rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, xsign * 5.0f, 0.0f);
+            }
+
             // Disable gravity if needed
             if (anim.GetBool(TagManager.isOnGround))
                 accelerations["Gravity"].maxVelY = null;
@@ -134,28 +143,7 @@ public class Movement : MonoBehaviour
                 accelerations["Gravity"].maxVelY = maxFallSpeed;
 
             // Apply movement.
-            flippedFromMove = false;
             DoMove();
-
-            // On hitting a wall, apply horizontal momentum to vertical momentum
-            // Need to do it here in case the player flipped in DoMove()
-            if (anim.GetBool(TagManager.isOnWall) && (wasOnWall != anim.GetBool(TagManager.isOnWall)))
-            {
-                float ysign = Mathf.Sign(rbody.velocity.y);
-                float xsign = Mathf.Sign(rbody.velocity.x);
-                if (ysign > 0.0f)
-                    rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, xsign * 5.0f, rbody.velocity.magnitude * ysign);
-                else
-                    rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, xsign * 5.0f, 0.0f);
-
-                // flip character
-                if (!flippedFromMove)
-                {
-                    Flip();
-                    if (!wasGrounded)
-                        previousDirection = -previousDirection;
-                }
-            }
 
             // Apply jump.
             DoJump();
@@ -202,7 +190,6 @@ public class Movement : MonoBehaviour
                 {
                     rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, rbody.velocity.x * currPivotSpeedRetention, null);
                     Flip();
-                    flippedFromMove = true;
                 }
 
                 // Disable friction and apply movement
@@ -214,7 +201,6 @@ public class Movement : MonoBehaviour
                 anim.SetBool(TagManager.isWalking, true);
             }
             // Player not moving ... apply friction and remove movement influence
-            // Also, need to keep track of flipping
             else
             {
                 accelerations["Friction"].maxVelX = 0.0f;
@@ -238,6 +224,14 @@ public class Movement : MonoBehaviour
         else if (other.gameObject.tag == TagManager.floor || other.gameObject.tag == TagManager.platform)
         {
             surfaceNormal = other.contacts[0].normal;
+        }
+        else if (other.collider.gameObject.tag == TagManager.wall)
+        {
+            float dir = other.contacts[0].normal.x;
+            if ((!facingRight && dir > 0) || (facingRight && dir < 0))
+            {
+                Flip();
+            }
         }
     }
 

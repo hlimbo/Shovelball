@@ -17,7 +17,7 @@ public class BallSpawner : MonoBehaviour {
     public float LaunchDelay;
 
     public int activeBallCount;
-
+    public bool isGameOver = true;
 
     private void GeneratePool()
     {
@@ -166,10 +166,11 @@ public class BallSpawner : MonoBehaviour {
         //Invoke("LaunchBall",1.0f);
 
         //spawn one at a time.
-        StartCoroutine(SpawnBalls(LaunchDelay));
-        StartCoroutine(ApplyVelocities(LaunchDelay));
-
-
+        if (!isGameOver)
+        {
+            StartCoroutine(SpawnBalls(LaunchDelay));
+            StartCoroutine(ApplyVelocities(LaunchDelay));
+        }
     }
 
 

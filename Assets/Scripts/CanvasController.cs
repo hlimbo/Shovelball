@@ -8,6 +8,13 @@ public class CanvasController : MonoBehaviour {
     public Text timerText;
     public Text playerOneScore;
     public Text playerTwoScore;
+    public Text GameOverText;
+    public Text RedWinsText;
+    public Text BlueWinsText;
+    public Text TieText;
+    public Text InstructionText;
+    public Text Countdown;
+
 
     public void updateTimer(float timeLeft)
     {
@@ -26,5 +33,29 @@ public class CanvasController : MonoBehaviour {
         {
             playerTwoScore.text = score.ToString();
         }
+    }
+    public void showGameOver(int winner)
+    {
+        //0 is tie, 1 is blue, 2 is red
+        GameOverText.gameObject.SetActive(true);
+        InstructionText.gameObject.SetActive(true);
+        switch (winner)
+        {
+            case 0:
+                TieText.gameObject.SetActive(true);
+                break;
+            case 1:
+                BlueWinsText.gameObject.SetActive(true);
+                break;
+            case 2:
+                RedWinsText.gameObject.SetActive(true);
+                break;
+            default:
+                break;
+        }
+    }
+    public void showCountdown(string count)
+    {
+        Countdown.text = count;
     }
 }
