@@ -46,7 +46,7 @@ public class GameState : MonoBehaviour {
         {
             if (countDown < 0)
             {
-                ccont.showCountdown("FIGHT");
+                ccont.showCountdown("ROUND START");
                 inCountdown = false;
                 startGame();
             }

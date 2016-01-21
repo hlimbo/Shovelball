@@ -117,6 +117,10 @@ public class Movement : MonoBehaviour
                 dropFrames++;
             }
 
+            // In air, movement should be left/right only
+            if (!anim.GetBool(TagManager.isOnGround))
+                surfaceNormal = Vector2.up;
+
             // On landing, apply horizontal boost for responsive controls. Also tell animation controller we hit the ground.
             if (anim.GetBool(TagManager.isOnGround) && (wasGrounded != anim.GetBool(TagManager.isOnGround)))
             {
@@ -185,16 +189,25 @@ public class Movement : MonoBehaviour
             // If the player is moving ...
             if (direction != 0)
             {
-                // If the player's direction changed, set horizontal velocity to half. For responsiveness.
+                // If the player's direction changed, set current velocity lower. For responsiveness.
                 if (Mathf.Sign(previousDirection) != Mathf.Sign(direction))
                 {
-                    rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, rbody.velocity.x * currPivotSpeedRetention, null);
+                    rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, rbody.velocity.x * currPivotSpeedRetention, rbody.velocity.y * currPivotSpeedRetention);
                     Flip();
                 }
 
+                // Set the movement vector according to the normal of the surface the player is on.
+                float angleOffset = Vector2.Angle(surfaceNormal, Vector2.up);
+                float angleCheck = Vector2.Angle(surfaceNormal, Vector2.left);
+                if (angleCheck > 90)
+                    angleOffset *= -1;
+                Vector2 surfaceDir = new Vector2(-Mathf.Cos(Mathf.PI + Mathf.Deg2Rad * angleOffset), -Mathf.Sin(Mathf.PI + Mathf.Deg2Rad * angleOffset)).normalized;
+
                 // Disable friction and apply movement
                 accelerations["Friction"].maxVelX = null;
-                accelerations["Movement"].maxVelX = direction;
+                accelerations["Friction"].maxVelY = null;
+                accelerations["Movement"].maxVelX = surfaceDir.x * direction;
+                accelerations["Movement"].maxVelY = surfaceDir.y * direction;
                 accelerations["Movement"].magnitude = currAcceleration;
 
                 previousDirection = direction;
@@ -204,8 +217,10 @@ public class Movement : MonoBehaviour
             else
             {
                 accelerations["Friction"].maxVelX = 0.0f;
+                accelerations["Friction"].maxVelY = 0.0f;
                 accelerations["Friction"].magnitude = currFriction;
                 accelerations["Movement"].maxVelX = null;
+                accelerations["Movement"].maxVelY = null;
                 anim.SetBool(TagManager.isWalking, false);
             }
         }
@@ -221,12 +236,13 @@ public class Movement : MonoBehaviour
         {
             this.Knockback((rbody.position - other.rigidbody.position).normalized * bounceSpeed, false);
         }
-        else if (other.gameObject.tag == TagManager.floor || other.gameObject.tag == TagManager.platform)
+        else if (other.gameObject.tag == TagManager.floor || other.gameObject.tag == TagManager.platform && rbody.position.y > other.contacts[0].point.y)
         {
             surfaceNormal = other.contacts[0].normal;
         }
         else if (other.collider.gameObject.tag == TagManager.wall)
         {
+            surfaceNormal = Vector2.up;
             float dir = other.contacts[0].normal.x;
             if ((!facingRight && dir > 0) || (facingRight && dir < 0))
             {
