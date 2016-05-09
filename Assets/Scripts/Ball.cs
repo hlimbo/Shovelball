@@ -11,11 +11,10 @@ public class Ball : MonoBehaviour {
     public float flyingThreshold;
     //public float moveAcceleration;
     public float bounciness;
-    public float momentumTransferRatio;
+    public float flyingTransferRatio;
+    public float collisionTransferRatio;
     public float wallHitDecay;
     public float airFriction;
-    public float playerMomentumTransferRatio;
-    public float playerBounciness;
 
     public bool isGrounded;
     public bool isFlying;
@@ -30,6 +29,7 @@ public class Ball : MonoBehaviour {
     private Vector2 stashVelocity;
     private float stashAngularVelocity;
     private Vector2 surfaceNormal;
+    private bool collided;
 
     //useful for ball Pooling
     public int TagNumber { get; set; }
@@ -49,11 +49,14 @@ public class Ball : MonoBehaviour {
         delayFrames = maxDelayFrames;
 
         TagNumber = INACTIVE;
+        SetIgnorePlayers(false);
+        collided = false;
     }
 
 	// Update is called once per frame
 	void FixedUpdate ()
     {
+        collided = false;
         // Pause physics if delayed
         if (delayFrames == maxDelayFrames)
         {
@@ -62,7 +65,10 @@ public class Ball : MonoBehaviour {
             isGrounded = Physics2D.OverlapCircle(ballBody.position, (circleCollider.radius + 0.1f) * ballTransform.localScale.y, floorLayerMask);
 
             if (ballBody.velocity.magnitude < flyingThreshold)
-               isFlying = false;
+            {
+                isFlying = false;
+                SetIgnorePlayers(true);
+            }
 
             // Flying balls know no limits
             if (isFlying)
@@ -95,16 +101,19 @@ public class Ball : MonoBehaviour {
 
     void OnCollisionEnter2D(Collision2D other)
     {
-        if (other.gameObject.tag == TagManager.wall)
+        if (other.gameObject.tag == TagManager.wall && !collided)
         {
+            collided = true;
             ballBody.velocity = Vector2.Reflect(ballBody.velocity * wallHitDecay, other.contacts[0].normal);
         }
-        else if (other.gameObject.tag == TagManager.floor)
+        else if (other.gameObject.tag == TagManager.floor && !collided)
         {
+            collided = true;
             ballBody.velocity = Vector2.Reflect(ballBody.velocity * bounciness, other.contacts[0].normal);
         }
-        else if (other.gameObject.tag == TagManager.platform)
+        else if (other.gameObject.tag == TagManager.platform && !collided)
         {
+            collided = true;
             if (other.contacts[0].point.y < ballBody.position.y)
             {
                 ballBody.velocity = Vector2.Reflect(ballBody.velocity * bounciness, other.contacts[0].normal);
@@ -114,14 +123,16 @@ public class Ball : MonoBehaviour {
                 ballBody.velocity *= 2f;
             }
         }
-        else if (other.gameObject.tag == TagManager.ball)
+        else if (other.gameObject.tag == TagManager.ball && !collided)
         {
             // if flying, do special stuff
             Ball otherBall = other.gameObject.GetComponent<Ball>();
+            otherBall.collided = true;
+            collided = true;
             if (isFlying)
             {
                 isFlying = false;
-                Vector2 forceVector = ballBody.velocity.normalized * stashVelocity.magnitude * momentumTransferRatio;
+                Vector2 forceVector = ballBody.velocity.normalized * stashVelocity.magnitude * flyingTransferRatio;
                 if (otherBall.isGrounded)
                 {
                     forceVector = GetRicochet(forceVector, otherBall.surfaceNormal);
@@ -132,28 +143,26 @@ public class Ball : MonoBehaviour {
             // otherwise do normal bounce
             else
             {
-                ballBody.velocity = Vector2.Reflect(other.relativeVelocity * bounciness, other.contacts[0].normal) * playerBounciness;
+                ballBody.velocity = other.contacts[0].normal * other.relativeVelocity.magnitude * bounciness * collisionTransferRatio;
+                otherBall.GetComponent<Rigidbody2D>().velocity = -ballBody.velocity;
             }
         }
         else if (other.gameObject.tag == TagManager.player)
         {
             Movement player = other.gameObject.GetComponent<Movement>();
-            Vector2 forceVector = other.relativeVelocity * playerMomentumTransferRatio;
-            Vector2 reactVector = Vector2.Reflect(other.relativeVelocity * bounciness, other.contacts[0].normal) * playerBounciness;
-
             if (isFlying)
             {
-                forceVector = ballBody.velocity.normalized * stashVelocity.magnitude * momentumTransferRatio;
-                reactVector = Vector2.zero;
+                Vector2 forceVector = ballBody.velocity.normalized * stashVelocity.magnitude * flyingTransferRatio;
+                Vector2 reactVector = Vector2.zero;
+
+                if (player.IsGrounded())
+                    forceVector = GetRicochet(forceVector, player.SurfaceNormal());
+                if (isGrounded)
+                    reactVector = GetRicochet(reactVector, surfaceNormal);
+
+                player.Knockback(forceVector);
+                ballBody.velocity = reactVector;
             }
-
-            if (player.IsGrounded())
-                forceVector = GetRicochet(forceVector, player.SurfaceNormal());
-            if (isGrounded)
-                reactVector = GetRicochet(reactVector, surfaceNormal);
-
-            player.Knockback(forceVector);
-            ballBody.velocity = reactVector;
         }
     }
 
@@ -173,10 +182,19 @@ public class Ball : MonoBehaviour {
         ballBody.velocity = Vector2.zero;
         ballBody.angularVelocity = 0f;
         delayFrames = 0;
+        SetIgnorePlayers(false);
     }
 
     public Vector2 SurfaceNormal()
     {
         return surfaceNormal;
+    }
+
+    private void SetIgnorePlayers(bool ignore)
+    {
+        foreach (Movement move in FindObjectsOfType<Movement>())
+        {
+            Physics2D.IgnoreCollision(GetComponent<Collider2D>(), move.GetComponent<Collider2D>(), ignore);
+        }
     }
 }

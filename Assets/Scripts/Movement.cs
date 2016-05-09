@@ -74,6 +74,8 @@ public class Movement : MonoBehaviour
         maxDelayFrames = 0;
         delayFrames = maxDelayFrames;
         dropFrames = maxDropFrames;
+
+        Physics2D.IgnoreLayerCollision(LayerMask.NameToLayer("Player"), LayerMask.NameToLayer("Player"));
     }
 
     // FixedUpdate is called once per physics step
@@ -192,16 +194,19 @@ public class Movement : MonoBehaviour
                 // If the player's direction changed, set current velocity lower. For responsiveness.
                 if (Mathf.Sign(previousDirection) != Mathf.Sign(direction))
                 {
-                    rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, rbody.velocity.x * currPivotSpeedRetention, rbody.velocity.y * currPivotSpeedRetention);
+                    rbody.velocity = PhysicsUtility.SetVelocity(rbody.velocity, rbody.velocity.x * currPivotSpeedRetention, null);
                     Flip();
                 }
-
-                // Set the movement vector according to the normal of the surface the player is on.
-                float angleOffset = Vector2.Angle(surfaceNormal, Vector2.up);
-                float angleCheck = Vector2.Angle(surfaceNormal, Vector2.left);
-                if (angleCheck > 90)
-                    angleOffset *= -1;
-                Vector2 surfaceDir = new Vector2(-Mathf.Cos(Mathf.PI + Mathf.Deg2Rad * angleOffset), -Mathf.Sin(Mathf.PI + Mathf.Deg2Rad * angleOffset)).normalized;
+                Vector2 surfaceDir = Vector2.right;
+                if (anim.GetBool(TagManager.isOnGround))
+                {
+                    // Set the movement vector according to the normal of the surface the player is on.
+                    float angleOffset = Vector2.Angle(surfaceNormal, Vector2.up);
+                    float angleCheck = Vector2.Angle(surfaceNormal, Vector2.left);
+                    if (angleCheck > 90)
+                        angleOffset *= -1;
+                    surfaceDir = new Vector2(Mathf.Cos(Mathf.Deg2Rad * angleOffset), Mathf.Sin(Mathf.Deg2Rad * angleOffset));
+                }
 
                 // Disable friction and apply movement
                 accelerations["Friction"].maxVelX = null;
@@ -232,11 +237,12 @@ public class Movement : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D other)
     {
-        if (other.gameObject.tag == TagManager.player)
+        /*if (other.gameObject.tag == TagManager.player)
         {
             this.Knockback((rbody.position - other.rigidbody.position).normalized * bounceSpeed, false);
         }
-        else if (other.gameObject.tag == TagManager.floor || other.gameObject.tag == TagManager.platform && rbody.position.y > other.contacts[0].point.y)
+        else */
+        if (other.gameObject.tag == TagManager.floor || other.gameObject.tag == TagManager.platform && rbody.position.y > other.contacts[0].point.y)
         {
             surfaceNormal = other.contacts[0].normal;
         }

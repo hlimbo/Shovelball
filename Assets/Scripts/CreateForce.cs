@@ -66,6 +66,12 @@ public class CreateForce : MonoBehaviour
                     forceVector = Vector2.down;
                 }
 
+                if ((movement.facingRight && Mathf.Abs(Vector2.Angle(Vector2.right, forceVector)) > 90) ||
+                    (!movement.facingRight && Mathf.Abs(Vector2.Angle(Vector2.left, forceVector)) > 90))
+                {
+                    forceVector.x *= -1;
+                }
+
                 //Debug.Log(angleUp.ToString() + ", " + angleRight.ToString() + ": " + forceVector.ToString());
 
                 // Apply the force
