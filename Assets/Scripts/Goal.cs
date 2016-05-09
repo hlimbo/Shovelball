@@ -4,6 +4,8 @@ using System.Collections;
 public class Goal : MonoBehaviour {
     public int assignedPlayer;
     public ParticleSystem scoreExplosion;
+    public AudioSource pointSound;
+    public AudioSource goalSound;
 
     private GameState gstate;
     private CameraController ccont;
@@ -31,6 +33,8 @@ public class Goal : MonoBehaviour {
             ccont.addScreenShake(10);
             //explode the ball
             gstate.removeBall(other);
+            pointSound.Play();
+            goalSound.Play();
         }
     }
 }

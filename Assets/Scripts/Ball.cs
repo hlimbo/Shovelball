@@ -19,6 +19,8 @@ public class Ball : MonoBehaviour {
     public bool isGrounded;
     public bool isFlying;
 
+    private AudioSource bounceSound;
+
     private Dictionary<string, Acceleration> accelerations;
     private Rigidbody2D ballBody;
     private CircleCollider2D circleCollider;
@@ -49,6 +51,8 @@ public class Ball : MonoBehaviour {
         delayFrames = maxDelayFrames;
 
         TagNumber = INACTIVE;
+        bounceSound = GetComponent<AudioSource>();
+        
         SetIgnorePlayers(false);
         collided = false;
     }
@@ -105,11 +109,13 @@ public class Ball : MonoBehaviour {
         {
             collided = true;
             ballBody.velocity = Vector2.Reflect(ballBody.velocity * wallHitDecay, other.contacts[0].normal);
+            bounceSound.Play();
         }
         else if (other.gameObject.tag == TagManager.floor && !collided)
         {
             collided = true;
             ballBody.velocity = Vector2.Reflect(ballBody.velocity * bounciness, other.contacts[0].normal);
+            bounceSound.Play();
         }
         else if (other.gameObject.tag == TagManager.platform && !collided)
         {
@@ -117,6 +123,7 @@ public class Ball : MonoBehaviour {
             if (other.contacts[0].point.y < ballBody.position.y)
             {
                 ballBody.velocity = Vector2.Reflect(ballBody.velocity * bounciness, other.contacts[0].normal);
+                bounceSound.Play();
             }
             else if (ballBody.velocity.magnitude < 1f)
             {

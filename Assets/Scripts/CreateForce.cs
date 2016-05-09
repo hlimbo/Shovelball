@@ -15,7 +15,6 @@ public class CreateForce : MonoBehaviour
         if (other.tag == TagManager.ball)
         {
             Ball ball = other.GetComponent<Ball>();
-
             Vector2 forceVector = direction * power;
 
             // Make the hits more predictable to 8 angles
@@ -66,10 +65,13 @@ public class CreateForce : MonoBehaviour
                     forceVector = Vector2.down;
                 }
 
-                if ((movement.facingRight && Mathf.Abs(Vector2.Angle(Vector2.right, forceVector)) > 90) ||
-                    (!movement.facingRight && Mathf.Abs(Vector2.Angle(Vector2.left, forceVector)) > 90))
+                if (movement.facingRight && Mathf.Abs(Vector2.Angle(Vector2.right, forceVector)) > 90)
                 {
-                    forceVector.x *= -1;
+                    forceVector.x *= -0.5f;
+                }
+                else if (!movement.facingRight && Mathf.Abs(Vector2.Angle(Vector2.left, forceVector)) > 90)
+                {
+                    forceVector.x *= -0.5f;
                 }
 
                 //Debug.Log(angleUp.ToString() + ", " + angleRight.ToString() + ": " + forceVector.ToString());
