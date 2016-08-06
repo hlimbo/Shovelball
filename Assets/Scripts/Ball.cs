@@ -56,10 +56,11 @@ public class Ball : MonoBehaviour {
         SetIgnorePlayers(false);
         collided = false;
     }
-
+    private Vector2 storeVel;
 	// Update is called once per frame
 	void FixedUpdate ()
     {
+        Debug.DrawRay(transform.position, ballBody.velocity, Color.yellow);
         collided = false;
         // Pause physics if delayed
         if (delayFrames == maxDelayFrames)
@@ -89,6 +90,7 @@ public class Ball : MonoBehaviour {
             }
 
             ballBody.velocity = PhysicsUtility.ApplyAccelerations(ballBody.velocity, accelerations.Values);
+            storeVel = ballBody.velocity;
         }
         else if (delayFrames == maxDelayFrames - 1)
         {
@@ -108,13 +110,13 @@ public class Ball : MonoBehaviour {
         if (other.gameObject.tag == TagManager.wall && !collided)
         {
             collided = true;
-            ballBody.velocity = Vector2.Reflect(ballBody.velocity * wallHitDecay, other.contacts[0].normal);
+            ballBody.velocity = GetRicochet(storeVel * wallHitDecay, other.contacts[0].normal);
             bounceSound.Play();
         }
         else if (other.gameObject.tag == TagManager.floor && !collided)
         {
             collided = true;
-            ballBody.velocity = Vector2.Reflect(ballBody.velocity * bounciness, other.contacts[0].normal);
+            ballBody.velocity = GetRicochet(storeVel * bounciness, other.contacts[0].normal);
             bounceSound.Play();
         }
         else if (other.gameObject.tag == TagManager.platform && !collided)
@@ -122,12 +124,14 @@ public class Ball : MonoBehaviour {
             collided = true;
             if (other.contacts[0].point.y < ballBody.position.y)
             {
-                ballBody.velocity = Vector2.Reflect(ballBody.velocity * bounciness, other.contacts[0].normal);
+                Debug.DrawRay(other.contacts[0].point, other.contacts[0].normal, Color.blue);
+                ballBody.velocity = GetRicochet(storeVel * bounciness, other.contacts[0].normal);
+                Debug.DrawRay(other.contacts[0].point, ballBody.velocity, Color.green);
                 bounceSound.Play();
             }
-            else if (ballBody.velocity.magnitude < 1f)
+            if (ballBody.velocity.magnitude < 2f)
             {
-                ballBody.velocity *= 2f;
+                ballBody.velocity = Vector2.zero;
             }
         }
         else if (other.gameObject.tag == TagManager.ball && !collided)
@@ -139,7 +143,7 @@ public class Ball : MonoBehaviour {
             if (isFlying)
             {
                 isFlying = false;
-                Vector2 forceVector = ballBody.velocity.normalized * stashVelocity.magnitude * flyingTransferRatio;
+                Vector2 forceVector = storeVel.normalized * stashVelocity.magnitude * flyingTransferRatio;
                 if (otherBall.isGrounded)
                 {
                     forceVector = GetRicochet(forceVector, otherBall.surfaceNormal);
@@ -147,10 +151,21 @@ public class Ball : MonoBehaviour {
                 otherBall.SendFlying(forceVector);
                 ballBody.velocity = Vector2.zero;
             }
+            else if (otherBall.isFlying)
+            {
+                otherBall.isFlying = false;
+                Vector2 forceVector = otherBall.storeVel.normalized * otherBall.stashVelocity.magnitude * otherBall.flyingTransferRatio;
+                if (isGrounded)
+                {
+                    forceVector = GetRicochet(forceVector, surfaceNormal);
+                }
+                SendFlying(forceVector);
+                other.gameObject.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+            }
             // otherwise do normal bounce
             else
             {
-                ballBody.velocity = other.contacts[0].normal * other.relativeVelocity.magnitude * bounciness * collisionTransferRatio;
+                ballBody.velocity = other.contacts[0].normal * other.relativeVelocity.magnitude * collisionTransferRatio;
                 otherBall.GetComponent<Rigidbody2D>().velocity = -ballBody.velocity;
             }
         }
@@ -159,7 +174,7 @@ public class Ball : MonoBehaviour {
             Movement player = other.gameObject.GetComponent<Movement>();
             if (isFlying)
             {
-                Vector2 forceVector = ballBody.velocity.normalized * stashVelocity.magnitude * flyingTransferRatio;
+                Vector2 forceVector = storeVel.normalized * stashVelocity.magnitude * flyingTransferRatio;
                 Vector2 reactVector = Vector2.zero;
 
                 if (player.IsGrounded())
